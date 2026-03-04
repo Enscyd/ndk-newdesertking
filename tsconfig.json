@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+    "esModuleInterop": true, // Recommended for better compatibility
+    "skipLibCheck": true,
+    
+    // Output settings
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Strictness (Keep these! They are good for your project)
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // React/Framework settings
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "moduleDetection": "force"
+  }
+}

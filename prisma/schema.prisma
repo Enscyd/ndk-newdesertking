@@ -1,0 +1,17 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  // The 'url' line has been removed from here
+}
+
+model Company {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("Companies")  // This makes the actual MySQL table name "Companies"
+}
