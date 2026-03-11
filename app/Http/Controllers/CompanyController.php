@@ -7,17 +7,53 @@ use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    public function store(Request $request)
+    // Show page
+    public function create()
     {
-        // 1. Validate input
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        $companies = Company::orderBy('id','desc')->get();
 
-        // 2. Insert into "Companies" table (via Eloquent Model)
-        Company::create($data);
+        return view('company.add', compact('companies'));
+    }
 
-        // 3. Send success response
-        return back()->with('message', 'Company successfully saved to MySQL!');
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'address' => 'nullable|string|max:255'
+            ]);
+
+            Company::create($validated);
+
+            return redirect()->back()->with('message','Company successfully saved!');
+        }
+
+    // Update company
+        public function update(Request $request, $id)
+        {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'address' => 'nullable|string|max:255'
+            ]);
+
+            $company = Company::findOrFail($id);
+
+            $company->update([
+                'name' => $request->name,
+                'address' => $request->address
+            ]);
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
+
+    // Delete company
+    public function destroy($id)
+    {
+        $company = Company::findOrFail($id);
+
+        $company->delete();
+
+        return redirect()->back()->with('message','Company deleted successfully!');
     }
 }

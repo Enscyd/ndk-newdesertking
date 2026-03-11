@@ -9,9 +9,86 @@ datasource db {
   // The 'url' line has been removed from here
 }
 
+/////// Company /////////////////////////////////
+
 model Company {
+  id      Int    @id @default(autoincrement())
+  name    String
+  address String?
+
+  @@map("Companies")
+}
+
+/////// Destination /////////////////////////////
+
+model Destination {
   id   Int    @id @default(autoincrement())
   name String
 
-  @@map("Companies")  // This makes the actual MySQL table name "Companies"
+  @@map("Destinations")
+}
+
+////// Trucks //////////////////////////////////
+
+model Truck {
+  id   Int    @id @default(autoincrement())
+  truckNumber String
+
+  @@map("Trucks")
+}
+
+/////// Employee //////////////////////////////
+
+model Employee {
+  id              Int     @id @default(autoincrement())
+  employeeName    String
+  employeePhoneNo String?
+
+  @@map("Employees")
+}
+
+//////// Trip ///////////////////////////////////
+
+model Trip {
+  id            Int      @id @default(autoincrement())
+  companyId     Int
+  destinationId Int
+  employeeId    Int
+  truckId       Int
+
+  tripType      String
+  driverAmount  Float?
+
+  tripDate      DateTime
+  tripAmount    Float
+
+  isOmani       String
+  omaniName     String?
+  omaniAmount   Float?
+
+  image         String?
+
+  @@map("Trips")
+}
+
+//////// Expense ///////////////////////////////////
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+
+  employeeId  Int
+  truckId     Int
+
+  expenseDate DateTime
+
+  category    String
+  details     String?
+
+  amount      Float
+
+  image       String?
+
+  createdAt   DateTime @default(now())
+
+  @@map("Expenses")
 }

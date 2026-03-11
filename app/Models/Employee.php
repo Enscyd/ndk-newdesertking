@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Company extends Model
+class Employee extends Model
 {
-    protected $table = 'Companies';
+    protected $table = 'Employees';
 
     protected $fillable = [
-        'name',
-        'address'
+        'employeeName',
+        'employeePhoneNo'
     ];
 
     public $timestamps = false;
