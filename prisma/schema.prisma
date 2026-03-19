@@ -92,3 +92,62 @@ model Expense {
 
   @@map("Expenses")
 }
+
+////////////// Invoice Counter ///////////////////////////////////////////////////////
+
+model InvoiceCounter {
+  id          Int      @id @default(autoincrement())
+  year        Int      @unique
+  last_number Int      @default(0)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("invoice_counters")
+}
+
+///////////////// Billing //////////////////////////////////////////////////////////////
+
+model Billing {
+  id          Int           @id @default(autoincrement())
+  invoiceNo   String        @unique
+  companyId   Int
+  date        DateTime      @default(now())
+  billImage   String?
+  grandTotal  Float
+
+  items       BillingItem[]
+
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@map("Billings")
+}
+
+model BillingItem {
+  id            Int     @id @default(autoincrement())
+  billingId     Int
+  tripId        Int     // ADD THIS
+
+  description   String
+  vehicleNo     String
+
+  quantity      Float
+  rent          Float
+
+  taxableAmount Float
+  vat           Float
+  totalAmount   Float
+
+  billing       Billing @relation(fields: [billingId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([billingId])
+  @@index([tripId])    
+  @@map("BillingItems")
+}
+
+

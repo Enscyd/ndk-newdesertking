@@ -78,3 +78,44 @@ Route::put('/expense/{id}',[ExpenseController::class,'update'])->name('expense.u
 Route::delete('/expense/{id}',[ExpenseController::class,'destroy'])->name('expense.delete');
 
 Route::get('/fetch-expenses',[ExpenseController::class,'fetchExpenses'])->name('expense.fetch');
+
+
+
+use App\Http\Controllers\BillingController;
+
+Route::prefix('billing')->group(function () {
+
+    // Billing list
+    Route::get('/display', [BillingController::class, 'display'])->name('billing.display');
+
+    // Create invoice page
+    Route::get('/', [BillingController::class, 'create'])->name('billing.create');
+
+    // Filter trips
+    Route::post('/filterTrips', [BillingController::class, 'filterTrips'])->name('billing.filterTrips');
+
+    // Store invoice
+    Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
+
+    // Add existing trips page
+    Route::get('/{id}/addTrip', [BillingController::class, 'addTrip'])->name('billing.addTrip');
+
+    // Add selected trips
+    Route::post('/{id}/addTrips', [BillingController::class, 'addTrips'])->name('billing.addTrips');
+
+    // CREATE MISSING TRIP FORM
+    Route::get('/{id}/trip/create', [BillingController::class, 'createTrip'])->name('billing.trip.create');
+
+    // STORE MISSING TRIP
+    Route::post('/{id}/trip/store', [BillingController::class, 'storeTrip'])->name('billing.trip.store');
+
+    // Edit invoice
+    Route::get('/{id}/edit', [BillingController::class, 'edit'])->name('billing.edit');
+
+    // Update billing item
+    Route::post('/item/{id}/update', [BillingController::class, 'updateItem'])->name('billing.item.update');
+
+    // Delete billing item
+    Route::delete('/item/{id}', [BillingController::class, 'deleteItem'])->name('billing.item.delete');
+
+});

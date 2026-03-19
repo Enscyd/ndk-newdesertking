@@ -25,23 +25,29 @@ class Trip extends Model
 
     public $timestamps = false;
 
-public function company()
-{
-    return $this->belongsTo(Company::class,'companyId');
-}
+    public function company()
+    {
+        return $this->belongsTo(Company::class,'companyId');
+    }
 
-public function destination()
-{
-    return $this->belongsTo(Destination::class,'destinationId');
-}
+    public function destination()
+    {
+        return $this->belongsTo(Destination::class,'destinationId');
+    }
 
-public function employee()
-{
-    return $this->belongsTo(Employee::class,'employeeId');
-}
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class,'employeeId');
+    }
 
-public function truck()
-{
-    return $this->belongsTo(Truck::class,'truckId');
-}
+    public function truck()
+    {
+        return $this->belongsTo(Truck::class,'truckId');
+    }
+
+    // NEW RELATIONSHIP (important)
+    public function billingItems()
+    {
+        return $this->hasMany(\App\Models\BillingItem::class,'tripId');
+    }
 }
