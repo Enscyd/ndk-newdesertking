@@ -108,18 +108,25 @@ model InvoiceCounter {
 
 ///////////////// Billing //////////////////////////////////////////////////////////////
 
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
+
 model Billing {
-  id          Int           @id @default(autoincrement())
-  invoiceNo   String        @unique
-  companyId   Int
-  date        DateTime      @default(now())
-  billImage   String?
-  grandTotal  Float
+  id            Int           @id @default(autoincrement())
+  invoiceNo     String        @unique
+  companyId     Int
+  date          DateTime      @default(now())
+  billImage     String?
+  grandTotal    Float
 
-  items       BillingItem[]
+  paymentStatus PaymentStatus @default(UNPAID) 
 
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  items         BillingItem[]
+
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   @@index([companyId])
   @@map("Billings")
@@ -128,7 +135,7 @@ model Billing {
 model BillingItem {
   id            Int     @id @default(autoincrement())
   billingId     Int
-  tripId        Int     // ADD THIS
+  tripId        Int
 
   description   String
   vehicleNo     String

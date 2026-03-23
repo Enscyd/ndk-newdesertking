@@ -204,9 +204,9 @@ Billing Form
 </li>
 
 <li>
-<a href="{{ route('billing.display') }}" class="block px-4 py-2 hover:bg-gray-700">
- Bill Book
-</a>
+    <a href="{{ route('billing.index') }}" class="block px-4 py-2 hover:bg-gray-700">
+        Bill Book
+    </a>
 </li>
 
 </ul>

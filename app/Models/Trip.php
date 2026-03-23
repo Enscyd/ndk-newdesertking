@@ -24,6 +24,9 @@ class Trip extends Model
     ];
 
     public $timestamps = false;
+        protected $casts = [
+        'tripDate' => 'datetime',
+    ];
 
     public function company()
     {

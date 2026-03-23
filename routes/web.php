@@ -1,18 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DestinationController;
+use App\Http\Controllers\TruckController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\TripController;
+use App\Http\Controllers\ExpenseController;
 
-// Landing page
-Route::get('/', function () { 
-    return view('welcome'); 
+use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\Billing\BillingFilterController;
+use App\Http\Controllers\Billing\BillingInvoiceTripController;
+use App\Http\Controllers\Billing\BillingViewController;
+use App\Http\Controllers\Billing\BillingInvoiceListingController;
+
+
+/* =========================
+   LANDING
+========================= */
+
+Route::get('/', function () {
+    return view('welcome');
 });
 
-// Add Company Page (GET Form)
-Route::get('/add-company', function () {
-    return view('company.add');
-})->name('company.add');
+
+/* =========================
+   COMPANY
+========================= */
+
+
+Route::get('/add-company', [CompanyController::class,'create'])->name('company.add');
 
 Route::post('/save-company', [CompanyController::class,'store'])->name('company.save');
 
@@ -20,9 +38,10 @@ Route::put('/company/{id}', [CompanyController::class,'update'])->name('company.
 
 Route::delete('/company/{id}', [CompanyController::class,'destroy'])->name('company.delete');
 
-Route::get('/add-company', [CompanyController::class,'create'])->name('company.add');
 
-
+/* =========================
+   DESTINATION
+========================= */
 
 Route::get('/destinations',[DestinationController::class,'index'])->name('destination.index');
 
@@ -33,7 +52,9 @@ Route::put('/destination/{id}',[DestinationController::class,'update'])->name('d
 Route::delete('/destination/{id}',[DestinationController::class,'destroy'])->name('destination.delete');
 
 
-use App\Http\Controllers\TruckController;
+/* =========================
+   TRUCK
+========================= */
 
 Route::get('/trucks',[TruckController::class,'index'])->name('truck.index');
 
@@ -44,31 +65,50 @@ Route::put('/truck/{id}',[TruckController::class,'update'])->name('truck.update'
 Route::delete('/truck/{id}',[TruckController::class,'destroy'])->name('truck.delete');
 
 
-use App\Http\Controllers\EmployeeController;
+/* =========================
+   EMPLOYEE
+========================= */
+
 Route::get('/employees',[EmployeeController::class,'index'])->name('employee.index');
+
 Route::post('/employee',[EmployeeController::class,'store'])->name('employee.save');
+
 Route::put('/employee/{id}',[EmployeeController::class,'update'])->name('employee.update');
+
 Route::delete('/employee/{id}',[EmployeeController::class,'destroy'])->name('employee.delete');
 
-use App\Http\Controllers\TripController;
+
+/* =========================
+   TRIPS
+========================= */
+
 Route::get('/trips',[TripController::class,'index'])->name('trip.index');
+
 Route::post('/trip',[TripController::class,'store'])->name('trip.store');
-/* FILTER MUST BE BEFORE {id} ROUTES */
+
+// ⚠️ MUST stay before {id}
 Route::get('/trip/filter',[TripController::class,'filter'])->name('trip.filter');
+
 Route::get('/trip/{id}/edit',[TripController::class,'edit'])->name('trip.edit');
+
 Route::put('/trip/{id}',[TripController::class,'update'])->name('trip.update');
+
 Route::delete('/trip/{id}',[TripController::class,'destroy'])->name('trip.delete');
+
 Route::get('/fetch-trips',[TripController::class,'fetchTrips'])->name('fetchTrips');
+
 Route::get('/trip/pdf', [TripController::class,'downloadPDF'])->name('trip.pdf');
 
 
-use App\Http\Controllers\ExpenseController;
+/* =========================
+   EXPENSE
+========================= */
 
 Route::get('/expenses',[ExpenseController::class,'index'])->name('expense.index');
 
 Route::post('/expense',[ExpenseController::class,'store'])->name('expense.store');
 
-/* FILTER MUST BE BEFORE {id} ROUTES */
+// ⚠️ MUST stay before {id}
 Route::get('/expense/filter',[ExpenseController::class,'filter'])->name('expense.filter');
 
 Route::get('/expense/{id}/edit',[ExpenseController::class,'edit'])->name('expense.edit');
@@ -80,42 +120,33 @@ Route::delete('/expense/{id}',[ExpenseController::class,'destroy'])->name('expen
 Route::get('/fetch-expenses',[ExpenseController::class,'fetchExpenses'])->name('expense.fetch');
 
 
+/* =========================
+   BILLING (UPDATED SPLIT)
+========================= */
+Route::prefix('billing')->name('billing.')->group(function () {
 
-use App\Http\Controllers\BillingController;
+    Route::get('/', [BillingController::class, 'create'])->name('create');
 
-Route::prefix('billing')->group(function () {
+    Route::post('/', [BillingInvoiceTripController::class, 'BillingStore'])->name('store');
+    Route::delete('/item/{id}', [BillingInvoiceTripController::class, 'BillingDelete'])->name('item.delete');
 
-    // Billing list
-    Route::get('/display', [BillingController::class, 'display'])->name('billing.display');
+    Route::post('/filter-trips', [BillingFilterController::class, 'filterTrips'])->name('filterTrips');
 
-    // Create invoice page
-    Route::get('/', [BillingController::class, 'create'])->name('billing.create');
-
-    // Filter trips
-    Route::post('/filterTrips', [BillingController::class, 'filterTrips'])->name('billing.filterTrips');
-
-    // Store invoice
-    Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
-
-    // Add existing trips page
-    Route::get('/{id}/addTrip', [BillingController::class, 'addTrip'])->name('billing.addTrip');
-
-    // Add selected trips
-    Route::post('/{id}/addTrips', [BillingController::class, 'addTrips'])->name('billing.addTrips');
-
-    // CREATE MISSING TRIP FORM
-    Route::get('/{id}/trip/create', [BillingController::class, 'createTrip'])->name('billing.trip.create');
-
-    // STORE MISSING TRIP
-    Route::post('/{id}/trip/store', [BillingController::class, 'storeTrip'])->name('billing.trip.store');
-
-    // Edit invoice
-    Route::get('/{id}/edit', [BillingController::class, 'edit'])->name('billing.edit');
-
-    // Update billing item
-    Route::post('/item/{id}/update', [BillingController::class, 'updateItem'])->name('billing.item.update');
-
-    // Delete billing item
-    Route::delete('/item/{id}', [BillingController::class, 'deleteItem'])->name('billing.item.delete');
+    Route::get('/list', [BillingInvoiceListingController::class, 'index'])->name('index');
+    Route::get('/filter', [BillingInvoiceListingController::class, 'filter'])->name('filter');
+    Route::post('/mark-paid/{id}', [BillingInvoiceListingController::class, 'markPaid'])->name('markPaid');
+    Route::delete('/delete/{id}', [BillingInvoiceListingController::class, 'deleteInvoice'])->name('delete');
 
 });
+
+/////// Image path //////////////////////////////////////////////////////
+
+Route::get('/storage-file/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath);
+})->where('path', '.*');
