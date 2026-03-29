@@ -2,122 +2,192 @@
 
 @foreach($invoices as $inv)
 
-<tr style="background:#f3f4f6; font-weight:600;">
-    <td class="p-3 border">{{ $inv->invoiceNo }}</td>
+<!-- =========================
+     INVOICE ROW
+========================= -->
+<tr class="bg-gray-50 hover:bg-gray-100 transition">
 
-    <td class="p-3 border">
-        {{ $inv->company->name ?? '' }}
+    <!-- INVOICE NO -->
+    <td class="p-4 border font-semibold text-gray-800">
+        {{ $inv->invoiceNo }}
     </td>
 
-    <td class="p-3 border">
-        {{ \Carbon\Carbon::parse($inv->date)->format('d M Y') }}
+    <!-- COMPANY -->
+    <td class="p-4 border text-gray-700">
+        {{ $inv->company->name ?? '-' }}
+    </td>
+
+    <!-- DATE -->
+    <td class="p-4 border text-gray-600">
+        {{ $inv->date ? \Carbon\Carbon::parse($inv->date)->format('d M Y') : '-' }}
     </td>
 
     <!-- IMAGE -->
-    <td class="p-3 border text-center">
+    <td class="p-4 border text-center">
         @if($inv->billImage)
-            <img src="{{ url('/storage-file/'.$inv->billImage) }}"
-                 class="w-12 h-12 object-cover rounded cursor-pointer border"
-                 onclick="openImage('{{ url('/storage-file/'.$inv->billImage) }}')">
+            <img src="{{ asset('storage/'.$inv->billImage) }}"
+                class="w-14 h-14 object-cover rounded-lg shadow cursor-pointer hover:scale-105 transition"
+                onclick="openImage(this.src)">
         @else
-            -
+            <span class="text-gray-400 text-sm">No Image</span>
         @endif
     </td>
 
-    <!-- STATUS + ACTIONS -->
-    <td class="p-3 border">
-
+    <!-- ACTION -->
+    <td class="p-4 border">
         <div class="flex items-center gap-2 flex-wrap">
 
-            @if($inv->paymentStatus == 'UNPAID')
+            @if($inv->paymentStatus === 'UNPAID')
 
-                <span class="text-red-600 font-semibold">
-                    UNPAID
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-600">
+                    Unpaid
                 </span>
 
-                <!-- MARK PAID -->
                 <button 
-                    class="markPaidBtn bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                    class="markPaidBtn bg-green-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-green-700 transition shadow-sm"
                     data-id="{{ $inv->id }}">
                     Mark Paid
                 </button>
 
             @else
 
-                <span class="text-green-600 font-semibold">
-                    PAID
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-600">
+                    Paid
                 </span>
 
             @endif
 
-            <!-- DELETE INVOICE -->
             <button 
-                class="deleteInvoiceBtn bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700"
+                class="deleteInvoiceBtn bg-red-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-red-700 transition shadow-sm"
                 data-id="{{ $inv->id }}">
                 Delete
             </button>
 
-        </div>
+            <a href="{{ route('billing.print', $inv->id) }}" 
+               target="_blank"
+               class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition shadow-sm">
+               Print
+            </a>
 
+        </div>
     </td>
+
 </tr>
 
 
+<!-- =========================
+     ITEMS SECTION
+========================= -->
 <tr>
-<td colspan="5" class="p-0">
+<td colspan="5" class="p-4 bg-white border-t">
 
-<table class="w-full border text-sm">
+<div class="rounded-lg border shadow-sm overflow-hidden">
 
-<thead>
+<table class="w-full text-sm text-gray-700">
+
+<thead class="bg-gray-100 text-gray-600 uppercase text-xs">
 <tr>
-<th class="border p-2">#</th>
-<th class="border p-2">Description</th>
-<th class="border p-2">Vehicle</th>
-<th class="border p-2">Qty</th>
-<th class="border p-2">Rent</th>
-<th class="border p-2">Taxable</th>
-<th class="border p-2">VAT</th>
-<th class="border p-2">Total</th>
-<th class="border p-2 text-center">Action</th> <!-- NEW -->
+    <th class="p-3 border">#</th>
+    <th class="p-3 border text-left">Description</th>
+    <th class="p-3 border">Vehicle</th>
+    <th class="p-3 border">Qty</th>
+    <th class="p-3 border">Rent</th>
+    <th class="p-3 border">Taxable</th>
+    <th class="p-3 border">VAT</th>
+    <th class="p-3 border">Total</th>
+    <th class="p-3 border text-center">Action</th>
 </tr>
 </thead>
 
 <tbody>
 
-@foreach($inv->items as $i => $item)
-<tr>
-<td class="border p-2">{{ $i+1 }}</td>
-<td class="border p-2">{{ $item->description }}</td>
-<td class="border p-2">{{ $item->vehicleNo }}</td>
-<td class="border p-2">{{ $item->quantity }}</td>
-<td class="border p-2">{{ $item->rent }}</td>
-<td class="border p-2">{{ $item->taxableAmount }}</td>
-<td class="border p-2">{{ $item->vat }}</td>
-<td class="border p-2">{{ $item->totalAmount }}</td>
+@if($inv->items && $inv->items->count())
 
-<!-- DELETE ITEM -->
-<td class="border p-2 text-center">
-    <button 
-        class="deleteItemBtn bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-        data-id="{{ $item->id }}">
-        Delete
-    </button>
-</td>
+@foreach($inv->items as $i => $item)
+<tr class="hover:bg-gray-50 transition">
+
+    <td class="p-3 border text-center">{{ $i+1 }}</td>
+
+    <td class="p-3 border font-medium">
+        {{ $item->description ?? '-' }}
+    </td>
+
+    <td class="p-3 border text-center">
+        {{ $item->vehicleNo ?? '-' }}
+    </td>
+
+    <td class="p-3 border text-center">
+        {{ $item->quantity ?? 0 }}
+    </td>
+
+    <td class="p-3 border text-center">
+        {{ number_format($item->rent ?? 0, 2) }}
+    </td>
+
+    <td class="p-3 border text-center">
+        {{ number_format($item->taxableAmount ?? 0, 2) }}
+    </td>
+
+    <td class="p-3 border text-center">
+        {{ number_format($item->vat ?? 0, 2) }}
+    </td>
+
+    <td class="p-3 border text-center font-semibold text-gray-800">
+        {{ number_format($item->totalAmount ?? 0, 2) }}
+    </td>
+
+    <td class="p-3 border text-center">
+<button 
+    type="button"
+    class="deleteItemBtn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition"
+    data-id="{{ $item->id }}">
+    Delete
+</button>
+
+<button 
+    type="button"
+    class="editItemBtn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition"
+    data-id="{{ $item->id }}">
+    Edit
+</button>
+    </td>
 
 </tr>
 @endforeach
 
+@else
+
 <tr>
-<td colspan="8" class="border p-2 text-right font-bold">
-    Total
-</td>
-<td class="border p-2 font-bold">
-    Rs {{ number_format($inv->grandTotal,2) }}
-</td>
+    <td colspan="9" class="p-4 text-center text-gray-400">
+        No items found
+    </td>
+</tr>
+
+@endif
+
+
+<!-- =========================
+     GRAND TOTAL
+========================= -->
+<tr class="bg-gray-50 font-semibold">
+
+    <td colspan="7" class="p-3 border text-right text-gray-700">
+        Grand Total
+    </td>
+
+    <td class="p-3 border text-center text-green-700 text-sm">
+        {{ number_format($inv->grandTotal ?? 0, 2) }}
+    </td>
+
+    <td class="border"></td>
+
 </tr>
 
 </tbody>
+
 </table>
+
+</div>
 
 </td>
 </tr>
@@ -126,18 +196,36 @@
 
 @else
 
+<!-- EMPTY STATE -->
 <tr>
-    <td colspan="5" class="p-4 text-center">
-        No invoices found
-    </td>
+<td colspan="5" class="p-10 text-center text-gray-500">
+    <div class="flex flex-col items-center gap-2">
+        <span class="text-4xl">📄</span>
+        <p class="text-lg font-medium">No invoices found</p>
+        <p class="text-sm text-gray-400">Create your first invoice</p>
+    </div>
+</td>
 </tr>
 
 @endif
 
 
-<!-- PAGINATION -->
+<!-- =========================
+     PAGINATION (FIXED FOR SPEED)
+========================= -->
 <tr>
-<td colspan="5" class="p-3">
-    {{ $invoices->links() }}
+<td colspan="5" class="p-4 bg-white border-t">
+
+    <div class="flex justify-between items-center">
+
+        <span class="text-sm text-gray-500">
+            Showing {{ $invoices->firstItem() ?? 0 }} 
+            to {{ $invoices->lastItem() ?? 0 }}
+        </span>
+
+        {{ $invoices->links() }}
+
+    </div>
+
 </td>
 </tr>

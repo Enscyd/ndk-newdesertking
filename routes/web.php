@@ -14,6 +14,11 @@ use App\Http\Controllers\Billing\BillingFilterController;
 use App\Http\Controllers\Billing\BillingInvoiceTripController;
 use App\Http\Controllers\Billing\BillingViewController;
 use App\Http\Controllers\Billing\BillingInvoiceListingController;
+use App\Http\Controllers\PurposeController;
+use App\Http\Controllers\SuggestionController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\WorkshopBillController;
+use App\Http\Controllers\EmployeeAccountController;
 
 
 /* =========================
@@ -125,17 +130,54 @@ Route::get('/fetch-expenses',[ExpenseController::class,'fetchExpenses'])->name('
 ========================= */
 Route::prefix('billing')->name('billing.')->group(function () {
 
+    // ===============================
+    // 🧾 CREATE INVOICE
+    // ===============================
     Route::get('/', [BillingController::class, 'create'])->name('create');
-
     Route::post('/', [BillingInvoiceTripController::class, 'BillingStore'])->name('store');
+
+    // ===============================
+    // 🧾 TRIP ITEM DELETE (from create page)
+    // ===============================
     Route::delete('/item/{id}', [BillingInvoiceTripController::class, 'BillingDelete'])->name('item.delete');
 
+    // ===============================
+    // 🔍 FILTER TRIPS (create page)
+    // ===============================
     Route::post('/filter-trips', [BillingFilterController::class, 'filterTrips'])->name('filterTrips');
 
+    // ===============================
+    // 📄 INVOICE LISTING
+    // ===============================
     Route::get('/list', [BillingInvoiceListingController::class, 'index'])->name('index');
+
+    // ===============================
+    // 🔍 FILTER INVOICES (AJAX)
+    // ===============================
     Route::get('/filter', [BillingInvoiceListingController::class, 'filter'])->name('filter');
+
+    // ===============================
+    // ✅ MARK AS PAID
+    // ===============================
     Route::post('/mark-paid/{id}', [BillingInvoiceListingController::class, 'markPaid'])->name('markPaid');
+
+    // ===============================
+    // 🗑 DELETE INVOICE
+    // ===============================
     Route::delete('/delete/{id}', [BillingInvoiceListingController::class, 'deleteInvoice'])->name('delete');
+
+    // ===============================
+    // 🗑 DELETE INVOICE ITEM (LIST PAGE) 
+    // ===============================
+    Route::delete('/delete-item/{id}', [BillingInvoiceListingController::class, 'deleteItem'])->name('item.delete.ajax');
+
+    Route::get('/print/{id}', [BillingInvoiceListingController::class, 'print'])->name('print');
+
+    // ===============================
+    // � UPDATEINVOICE ITEM (LIST PAGE) 
+    // ===============================
+    Route::post('/update-item/{id}', [BillingInvoiceListingController::class, 'updateItem'])->name('item.update');
+
 
 });
 
@@ -150,3 +192,67 @@ Route::get('/storage-file/{path}', function ($path) {
 
     return response()->file($fullPath);
 })->where('path', '.*');
+
+
+/* =========================
+   PURPOSE
+========================= */
+
+Route::get('/purposes', [PurposeController::class,'index'])->name('purpose.index');
+
+Route::get('/add-purpose', [PurposeController::class,'create'])->name('purpose.add');
+
+Route::post('/save-purpose', [PurposeController::class,'store'])->name('purpose.save');
+
+Route::put('/purpose/{id}', [PurposeController::class,'update'])->name('purpose.update');
+
+Route::delete('/purpose/{id}', [PurposeController::class,'destroy'])->name('purpose.delete');
+
+/* =========================
+   SUGGESTION
+========================= */
+
+Route::get('/suggestions', [SuggestionController::class,'index'])->name('suggestion.index');
+
+Route::get('/add-suggestion', [SuggestionController::class,'create'])->name('suggestion.add');
+
+Route::post('/save-suggestion', [SuggestionController::class,'store'])->name('suggestion.save');
+
+Route::put('/suggestion/{id}', [SuggestionController::class,'update'])->name('suggestion.update');
+
+Route::delete('/suggestion/{id}', [SuggestionController::class,'destroy'])->name('suggestion.delete');
+
+/* =========================
+   Accounts
+========================= */
+
+Route::get('/accounts', [AccountController::class,'index'])->name('accounts.index');
+Route::post('/accounts', [AccountController::class,'store'])->name('accounts.store');
+Route::delete('/accounts/{id}', [AccountController::class, 'destroy'])->name('accounts.destroy');
+Route::get('/accounts/pdf', [AccountController::class, 'exportPdf'])->name('accounts.pdf');
+
+/* =========================
+   Workshop
+========================= */
+
+Route::get('/workshop/create', [WorkshopBillController::class, 'create'])->name('workshop.create');
+Route::post('/workshop/store', [WorkshopBillController::class, 'store'])->name('workshop.store');
+Route::delete('/workshop/delete/{id}', [WorkshopBillController::class, 'destroy']);
+Route::get('/workshop/edit/{id}', [WorkshopBillController::class, 'edit']);
+Route::post('/workshop/mark-paid/{id}', [WorkshopBillController::class, 'markPaid']);
+
+Route::delete('/workshop/item/delete/{id}', [WorkshopBillController::class, 'deleteItem']);
+Route::get('/workshop/item/edit/{id}', [WorkshopBillController::class, 'editItem']);
+Route::post('/workshop/item/update/{id}', [WorkshopBillController::class, 'updateItem']);
+Route::get('/workshop/pdf/{id}', [WorkshopBillController::class, 'generatePDF']);
+Route::get('/item-suggestions', [WorkshopBillController::class, 'itemSuggestions']);
+
+/* =========================
+   Employee Accounts
+========================= */
+
+Route::get('/employee-accounts', [EmployeeAccountController::class, 'index'])->name('employee.accounts');
+Route::post('/employee-accounts', [EmployeeAccountController::class, 'store']);
+Route::get('/employee-accounts/filter', [EmployeeAccountController::class, 'filter']);
+Route::delete('/employee-accounts/{id}', [EmployeeAccountController::class, 'destroy']);
+Route::get('/employee-accounts/pdf', [EmployeeAccountController::class, 'pdf']);

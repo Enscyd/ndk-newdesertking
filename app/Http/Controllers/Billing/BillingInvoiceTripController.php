@@ -5,45 +5,51 @@ namespace App\Http\Controllers\Billing;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Billing;
 use App\Models\BillingItem;
 use App\Models\InvoiceCounter;
 
 class BillingInvoiceTripController extends Controller
 {
+    // ===============================
     // ✅ SAVE BILLING
+    // ===============================
     public function BillingStore(Request $request)
     {
         $request->validate([
-            // ❌ REMOVED invoiceNo from validation (handled in backend)
-
-            'companyId' => 'required|integer|exists:companies,id',
-            'grandTotal' => 'required|numeric|min:0',
+            'companyId'     => 'required|integer|exists:companies,id',
+            'grandTotal'    => 'required|numeric|min:0',
             'paymentStatus' => 'required|in:PAID,UNPAID',
-            'billImage' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'billImage'     => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
 
             'items' => 'required|array|min:1',
 
-            'items.*.tripId' => 'nullable|integer',
-            'items.*.description' => 'required|string|max:255',
-            'items.*.vehicleNo' => 'required|string|max:50',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.rent' => 'required|numeric|min:0',
+            'items.*.tripId'        => 'nullable|integer',
+            'items.*.description'   => 'required|string|max:255',
+            'items.*.vehicleNo'     => 'required|string|max:50',
+            'items.*.quantity'      => 'required|numeric|min:0.01',
+            'items.*.rent'          => 'required|numeric|min:0',
             'items.*.taxableAmount' => 'required|numeric|min:0',
-            'items.*.vat' => 'required|numeric|min:0',
-            'items.*.totalAmount' => 'required|numeric|min:0',
+            'items.*.vat'           => 'required|numeric|min:0',
+            'items.*.totalAmount'   => 'required|numeric|min:0',
         ]);
 
         DB::beginTransaction();
 
+        $imagePath = null;
+
         try {
-            // 📷 Upload Image
-            $imagePath = null;
+            // ===============================
+            // 📷 UPLOAD IMAGE
+            // ===============================
             if ($request->hasFile('billImage')) {
                 $imagePath = $request->file('billImage')->store('billing', 'public');
             }
 
-            // 🔥 SAFE INVOICE NUMBER GENERATION
+            // ===============================
+            // 🔢 GENERATE INVOICE NUMBER (SAFE LOCK)
+            // ===============================
             $year = now()->year;
 
             $counter = InvoiceCounter::where('year', $year)
@@ -61,19 +67,28 @@ class BillingInvoiceTripController extends Controller
 
             $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
 
-            // 💾 Create Billing
+            // ===============================
+            // 💰 (OPTIONAL SAFE TOTAL CALCULATION)
+            // ===============================
+            $calculatedTotal = collect($request->items)->sum('totalAmount');
+
+            // ===============================
+            // 💾 CREATE BILLING
+            // ===============================
             $billing = Billing::create([
                 'invoiceNo'     => $invoiceNo,
                 'companyId'     => $request->companyId,
-                'grandTotal'    => $request->grandTotal,
+                'grandTotal'    => $calculatedTotal, // 🔥 safer than trusting frontend
                 'paymentStatus' => $request->paymentStatus,
                 'billImage'     => $imagePath,
-                'date'          => now(), // ✅ explicitly set
+                'date'          => now(),
             ]);
 
-            // 📦 Save Items
-            foreach ($request->items as $item) {
-                BillingItem::create([
+            // ===============================
+            // 📦 SAVE ITEMS (BULK INSERT)
+            // ===============================
+            $items = collect($request->items)->map(function ($item) use ($billing) {
+                return [
                     'billingId'     => $billing->id,
                     'tripId'        => $item['tripId'] ?? null,
                     'description'   => $item['description'],
@@ -83,17 +98,31 @@ class BillingInvoiceTripController extends Controller
                     'taxableAmount' => $item['taxableAmount'],
                     'vat'           => $item['vat'],
                     'totalAmount'   => $item['totalAmount'],
-                ]);
-            }
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ];
+            })->toArray();
+
+            BillingItem::insert($items);
 
             DB::commit();
 
-            // 🔁 Redirect to regenerate new invoice
+            // ===============================
+            // 🔁 REDIRECT
+            // ===============================
             return redirect()->route('billing.create')
                 ->with('success', "Billing saved successfully ✅ Invoice: {$invoiceNo}");
 
         } catch (\Throwable $e) {
+
             DB::rollBack();
+
+            // ===============================
+            // 🗑 DELETE UPLOADED IMAGE (SAFE CLEANUP)
+            // ===============================
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
 
             return back()->withErrors([
                 'error' => $e->getMessage()
@@ -102,7 +131,9 @@ class BillingInvoiceTripController extends Controller
     }
 
 
-    // ✅ DELETE ITEM (UNCHANGED + SAFE)
+    // ===============================
+    // ✅ DELETE ITEM + UPDATE TOTAL
+    // ===============================
     public function BillingDelete($id)
     {
         DB::beginTransaction();
@@ -129,6 +160,7 @@ class BillingInvoiceTripController extends Controller
             return back()->with('success', 'Trip removed successfully');
 
         } catch (\Throwable $e) {
+
             DB::rollBack();
 
             return back()->withErrors([

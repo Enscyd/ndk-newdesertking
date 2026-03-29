@@ -1,4 +1,14 @@
 // =========================
+// GLOBAL SAFETY (NO REFRESH)
+// =========================
+document.addEventListener('click', function(e){
+    if(e.target.closest('.editItemBtn') || e.target.closest('.saveItemBtn')){
+        e.preventDefault();
+    }
+}, true);
+
+
+// =========================
 // IMAGE PREVIEW
 // =========================
 function openImage(src) {
@@ -28,237 +38,227 @@ document.addEventListener('click', function(e){
 // =========================
 function loadInvoices(url = null) {
 
-    // SAFETY: ignore event object
-    if (typeof url !== "string") {
-        url = null;
-    }
+    if (typeof url !== "string") url = null;
 
-    const invoiceInput = document.querySelector('[name="invoiceNo"]');
-    const companyInput = document.querySelector('[name="companyId"]');
-    const statusInput  = document.querySelector('[name="status"]');
+    const invoiceNo = document.querySelector('[name="invoiceNo"]')?.value.trim() || '';
+    const companyId = document.querySelector('[name="companyId"]')?.value || '';
+    const status    = document.querySelector('[name="status"]')?.value || '';
+    const date      = document.querySelector('[name="date"]')?.value || '';
 
-    const invoiceNo = invoiceInput ? invoiceInput.value.trim() : '';
-    const companyId = companyInput ? companyInput.value : '';
-    const status    = statusInput ? statusInput.value : '';
+    const params = new URLSearchParams({ invoiceNo, companyId, status, date });
 
-    const params = new URLSearchParams({
-        invoiceNo,
-        companyId,
-        status
-    });
+    let finalUrl = url ? url : window.filterUrl + '?' + params.toString();
 
-    // =========================
-    // BUILD FINAL URL (SAFE)
-    // =========================
-    let finalUrl = window.filterUrl;
+    const tableBody = document.getElementById('invoiceTable');
 
-    if (url) {
-        finalUrl = url; // pagination url
-    }
-
-    finalUrl += (finalUrl.includes('?') ? '&' : '?') + params.toString();
-
-    console.log("FETCH:", finalUrl);
-
-    const tableBody = document.getElementById('invoiceTableBody');
-
-    // =========================
-    // LOADING STATE
-    // =========================
     if (tableBody) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="p-4 text-center">Loading...</td>
-            </tr>
-        `;
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>`;
     }
 
-    // =========================
-    // FETCH DATA
-    // =========================
     fetch(finalUrl)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            return res.text();
-        })
+        .then(res => res.text())
         .then(html => {
-            if (tableBody) {
-                tableBody.innerHTML = html;
-            }
+            if (tableBody) tableBody.innerHTML = html;
         })
-        .catch(err => {
-            console.error("AJAX ERROR:", err);
-
+        .catch(() => {
             if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-4 text-center text-red-600">
-                            Failed to load data
-                        </td>
-                    </tr>
-                `;
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Failed</td></tr>`;
             }
         });
 }
 
 
 // =========================
-// MARK AS PAID (AJAX)
+// MARK AS PAID
 // =========================
 document.addEventListener('click', function(e){
-
     const btn = e.target.closest('.markPaidBtn');
+    if (!btn) return;
 
-    if (btn) {
+    const id = btn.dataset.id;
+    if (!confirm("Mark as PAID?")) return;
 
-        const id = btn.getAttribute('data-id');
-
-        if (!id) return;
-
-        if (!confirm("Mark this invoice as PAID?")) return;
-
-        fetch(`/billing/mark-paid/${id}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
-        })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("Failed to update status");
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.success) {
-                loadInvoices(); // 🔥 reload updated list
-            }
-        })
-        .catch(err => {
-            console.error("MARK PAID ERROR:", err);
-            alert("Failed to update payment status");
-        });
-
-    }
-
+    fetch(`/billing/mark-paid/${id}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).then(() => loadInvoices());
 });
 
 
 // =========================
-// INITIAL LOAD + EVENTS
+// FILTER EVENTS
 // =========================
 document.addEventListener("DOMContentLoaded", function () {
 
-    // INITIAL LOAD
     loadInvoices();
 
-    const invoiceInput = document.querySelector('[name="invoiceNo"]');
-    const companyInput = document.querySelector('[name="companyId"]');
-    const statusInput  = document.querySelector('[name="status"]');
-    const clearBtn     = document.getElementById('clearFilter');
+    ['invoiceNo','companyId','status','date'].forEach(name=>{
+        document.querySelector(`[name="${name}"]`)?.addEventListener('change', loadInvoices);
+    });
 
-    if (invoiceInput) {
-        invoiceInput.addEventListener('keyup', () => loadInvoices());
-    }
+    document.querySelector('[name="invoiceNo"]')?.addEventListener('keyup', loadInvoices);
 
-    if (companyInput) {
-        companyInput.addEventListener('change', () => loadInvoices());
-    }
-
-    if (statusInput) {
-        statusInput.addEventListener('change', () => loadInvoices());
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-            if (invoiceInput) invoiceInput.value = '';
-            if (companyInput) companyInput.value = '';
-            if (statusInput)  statusInput.value = '';
-            loadInvoices();
-        });
-    }
-
+    document.getElementById('clearFilter')?.addEventListener('click', ()=>{
+        document.querySelectorAll('[name="invoiceNo"],[name="companyId"],[name="status"],[name="date"]')
+            .forEach(el => el.value = '');
+        loadInvoices();
+    });
 });
 
 
 // =========================
-// AJAX PAGINATION
+// PAGINATION
 // =========================
 document.addEventListener('click', function(e){
-
     const link = e.target.closest('.pagination a');
-
     if (link) {
         e.preventDefault();
-
-        const url = link.getAttribute('href');
-
-        if (url) {
-            loadInvoices(url);
-        }
+        loadInvoices(link.href);
     }
-
 });
+
 
 // =========================
 // DELETE INVOICE
 // =========================
 document.addEventListener('click', function(e){
-
     const btn = e.target.closest('.deleteInvoiceBtn');
+    if (!btn) return;
 
-    if(btn){
+    if (!confirm("Delete invoice?")) return;
 
-        const id = btn.getAttribute('data-id');
-
-        if(!confirm("Delete full invoice? This cannot be undone!")) return;
-
-        fetch(`/billing/delete/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success){
-                loadInvoices();
-            }
-        });
-
-    }
-
+    fetch(`/billing/delete/${btn.dataset.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    }).then(()=>loadInvoices());
 });
+
 
 // =========================
 // DELETE ITEM
 // =========================
 document.addEventListener('click', function(e){
-
     const btn = e.target.closest('.deleteItemBtn');
+    if (!btn) return;
 
-    if(btn){
+    if (!confirm("Delete item?")) return;
 
-        const id = btn.getAttribute('data-id');
+    fetch(`/billing/delete-item/${btn.dataset.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    }).then(()=>loadInvoices());
+});
 
-        if(!confirm("Delete this item?")) return;
 
-        fetch(`/billing/item/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(() => {
-            loadInvoices(); // reload updated data
-        });
+// =========================
+// EDIT ITEM
+// =========================
+document.addEventListener('click', function(e){
 
+    const btn = e.target.closest('.editItemBtn');
+    if(!btn) return;
+
+    e.stopImmediatePropagation();
+
+    const row = btn.closest('tr');
+    const cells = row.querySelectorAll('td');
+
+    for(let i = 1; i <= 7; i++){
+
+        const val = cells[i].innerText.trim();
+
+        let input = '';
+
+        if(i === 3) input = `<input class="qty border p-1 w-full" value="${val}">`;
+        else if(i === 4) input = `<input class="rent border p-1 w-full" value="${val}">`;
+        else if(i === 5) input = `<input class="taxable border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else if(i === 6) input = `<input class="vat border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else if(i === 7) input = `<input class="total border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else input = `<input class="border p-1 w-full" value="${val}">`;
+
+        cells[i].innerHTML = input;
     }
+
+    btn.innerText = "Save";
+    btn.classList.replace('editItemBtn','saveItemBtn');
+});
+
+
+// =========================
+// AUTO CALCULATION (FULL)
+// =========================
+document.addEventListener('input', function(e){
+
+    if(e.target.classList.contains('qty') || e.target.classList.contains('rent')){
+
+        const row = e.target.closest('tr');
+
+        const qty = parseFloat(row.querySelector('.qty')?.value) || 0;
+        const rent = parseFloat(row.querySelector('.rent')?.value) || 0;
+
+        const taxable = qty * rent;
+        const vat = taxable * 0.05; // change %
+        const total = taxable + vat;
+
+        row.querySelector('.taxable').value = taxable.toFixed(2);
+        row.querySelector('.vat').value = vat.toFixed(2);
+        row.querySelector('.total').value = total.toFixed(2);
+
+        updateGrandTotal();
+    }
+
+});
+
+
+// =========================
+// GRAND TOTAL UPDATE
+// =========================
+function updateGrandTotal(){
+
+    let sum = 0;
+
+    document.querySelectorAll('.total').forEach(el=>{
+        sum += parseFloat(el.value) || 0;
+    });
+
+    const el = document.querySelector('#grandTotal');
+    if(el) el.innerText = sum.toFixed(2);
+}
+
+
+// =========================
+// SAVE ITEM
+// =========================
+document.addEventListener('click', function(e){
+
+    const btn = e.target.closest('.saveItemBtn');
+    if(!btn) return;
+
+    e.stopImmediatePropagation();
+
+    const row = btn.closest('tr');
+    const id = btn.dataset.id;
+    const inputs = row.querySelectorAll('input');
+
+    const data = {
+        description: inputs[0]?.value || '',
+        vehicleNo: inputs[1]?.value || '',
+        quantity: inputs[2]?.value || 0,
+        rent: inputs[3]?.value || 0,
+        taxableAmount: inputs[4]?.value || 0,
+        vat: inputs[5]?.value || 0,
+        totalAmount: inputs[6]?.value || 0
+    };
+
+    fetch(window.updateItemUrl.replace(':id', id), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    }).then(()=>loadInvoices());
 
 });

@@ -4,87 +4,47 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Models\Company;
-use App\Models\BillingItem;
 
 class Billing extends Model
 {
-    /*
-    |--------------------------------------------------------------------------
-    | TABLE
-    |--------------------------------------------------------------------------
-    */
-    protected $table = 'billings'; // ✅ use lowercase (Laravel standard)
+    protected $table = 'Billings'; // ✅ MUST match schema
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | MASS ASSIGNMENT
-    |--------------------------------------------------------------------------
-    */
     protected $fillable = [
         'invoiceNo',
         'companyId',
         'date',
         'billImage',
-        'paymentStatus', // ✅ ADDED
+        'paymentStatus',
         'grandTotal'
     ];
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | CASTS
-    |--------------------------------------------------------------------------
-    */
     protected $casts = [
         'date' => 'datetime',
         'grandTotal' => 'float',
     ];
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | DEFAULT ATTRIBUTES
-    |--------------------------------------------------------------------------
-    */
     protected $attributes = [
-        'paymentStatus' => 'UnPaid', // ✅ default
+        'paymentStatus' => 'UNPAID', // ✅ matches enum
     ];
 
+    // =========================
+    // RELATIONSHIPS
+    // =========================
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIPS
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Billing has many BillingItems
-     */
     public function items()
     {
-        return $this->hasMany(BillingItem::class, 'billingId');
+        return $this->hasMany(BillingItem::class, 'billingId'); // ✅ correct
     }
 
-    /**
-     * Billing belongs to a Company
-     */
     public function company()
     {
-        return $this->belongsTo(Company::class, 'companyId');
+        return $this->belongsTo(Company::class, 'companyId'); // ✅ correct
     }
 
+    // =========================
+    // ACCESSORS
+    // =========================
 
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS (OPTIONAL UI HELPERS)
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Get formatted total (optional)
-     */
     protected function formattedTotal(): Attribute
     {
         return Attribute::make(
@@ -92,13 +52,10 @@ class Billing extends Model
         );
     }
 
-    /**
-     * Payment status badge class (for UI)
-     */
     protected function paymentStatusBadge(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->paymentStatus === 'Paid'
+            get: fn () => $this->paymentStatus === 'PAID'
                 ? 'success'
                 : 'danger'
         );

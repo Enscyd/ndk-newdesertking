@@ -6,73 +6,102 @@
 
     <h2 class="text-2xl font-bold mb-6">Invoices List</h2>
 
-    <!-- 🔥 AJAX URL (CRITICAL) -->
+    <!-- =========================
+         🔐 CSRF TOKEN
+    ========================== -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- =========================
+         🔥 AJAX URLS (UPDATED)
+    ========================== -->
     <script>
-        window.filterUrl = "{{ url('/billing/filter') }}";
+        window.filterUrl = "{{ route('billing.filter') }}";
+        window.updateItemUrl = "{{ route('billing.item.update', ':id') }}"; // ✅ NEW
     </script>
 
     <!-- =========================
          FILTER SECTION
     ========================== -->
-    <div class="mb-4 flex gap-3 items-end">
+    <div class="flex flex-wrap gap-3 items-center mb-4">
 
-        <!-- Invoice -->
-        <input type="text" name="invoiceNo"
+        <!-- Invoice No -->
+        <input 
+            type="text" 
+            name="invoiceNo"
             placeholder="Invoice No"
-            class="border px-3 py-2 rounded w-40">
+            class="border p-2 rounded w-40"
+        >
 
         <!-- Company -->
-        <select name="companyId" class="border px-3 py-2 rounded w-48">
+        <select name="companyId" class="border p-2 rounded w-44">
             <option value="">All Companies</option>
             @foreach($companies as $company)
-                <option value="{{ $company->id }}">
-                    {{ $company->name }}
-                </option>
+                <option value="{{ $company->id }}">{{ $company->name }}</option>
             @endforeach
         </select>
 
         <!-- Status -->
-        <select name="status" class="border px-3 py-2 rounded">
-            <option value="">All</option>
+        <select name="status" class="border p-2 rounded w-36">
+            <option value="">All Status</option>
             <option value="PAID">Paid</option>
             <option value="UNPAID">Unpaid</option>
         </select>
 
+        <!-- DATE -->
+        <input 
+            type="date" 
+            name="date"
+            value="{{ date('Y-m-d') }}" 
+            class="border p-2 rounded"
+        >
+
         <!-- Clear -->
-        <button id="clearFilter"
-            class="bg-gray-500 text-white px-4 py-2 rounded">
+        <button 
+            id="clearFilter"
+            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
             Clear
         </button>
 
     </div>
 
-
     <!-- =========================
          TABLE SECTION
     ========================== -->
-    <table class="w-full border text-sm">
+    <div class="bg-white shadow rounded overflow-hidden">
 
-        <tbody id="invoiceTableBody">
+        <table class="w-full border text-sm">
 
-            <!-- 🔄 INITIAL LOADING -->
-            <tr>
-                <td colspan="5" class="p-4 text-center">
-                    Loading...
-                </td>
-            </tr>
+            <!-- HEADER -->
+            <thead class="bg-gray-100 text-gray-600 text-xs uppercase">
+                <tr>
+                    <th class="p-3 border">Invoice</th>
+                    <th class="p-3 border">Company</th>
+                    <th class="p-3 border">Date</th>
+                    <th class="p-3 border">Image</th>
+                    <th class="p-3 border">Action</th>
+                </tr>
+            </thead>
 
-        </tbody>
+            <!-- BODY -->
+            <tbody id="invoiceTable">
 
-    </table>
+                <!-- ✅ INITIAL DATA LOAD -->
+                @include('billing.partials.table', ['invoices' => $invoices])
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 
 
 <!-- =========================
-     IMAGE MODAL (🔥 IMPORTANT)
+     IMAGE MODAL
 ========================= -->
 <div id="imageModal"
-     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 cursor-pointer">
 
     <img id="modalImg"
          class="max-h-[80vh] rounded shadow-lg">

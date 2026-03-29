@@ -3,6 +3,9 @@
 import { renderTrips, renderPagination, setTripCache } from './trips.js';
 
 let currentRequest = null;
+let debounceTimer = null;
+let pageCache = {};
+let isLoading = false;
 
 /* =========================
    HELPERS
@@ -12,26 +15,33 @@ function getCSRFToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || "";
 }
 
-function showLoading(grid) {
-    if (!grid) return;
-
-    grid.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center py-3">
-                Loading...
-            </td>
-        </tr>`;
+function showLoadingOverlay() {
+    const grid = document.getElementById("tripGrid");
+    if (grid) grid.classList.add("opacity-50");
 }
 
-function showError(grid, message) {
-    if (!grid) return;
+function hideLoadingOverlay() {
+    const grid = document.getElementById("tripGrid");
+    if (grid) grid.classList.remove("opacity-50");
+}
 
-    grid.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center text-red-500 py-3">
-                ${message}
-            </td>
-        </tr>`;
+function disablePagination() {
+    document.querySelectorAll('.page-btn').forEach(btn => btn.disabled = true);
+}
+
+function enablePagination() {
+    document.querySelectorAll('.page-btn').forEach(btn => btn.disabled = false);
+}
+
+
+/* =========================
+   DEBOUNCE
+========================= */
+function debounceFilter(page = 1) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        filterTrips(page);
+    }, 300);
 }
 
 
@@ -40,14 +50,27 @@ function showError(grid, message) {
 ========================= */
 export async function filterTrips(page = 1) {
 
+    if (isLoading) return;
+
     const company = document.getElementById("companyId")?.value.trim() || "";
     const vehicle = document.getElementById("vehicleNo")?.value.trim() || "";
     const tripDate = document.getElementById("tripDate")?.value || "";
     const tripMonth = document.getElementById("tripMonth")?.value || "";
 
-    const grid = document.getElementById("tripGrid");
+    const cacheKey = JSON.stringify({ page, company, vehicle, tripDate, tripMonth });
 
-    showLoading(grid);
+    // ✅ CACHE HIT
+    if (pageCache[cacheKey]) {
+        const cached = pageCache[cacheKey];
+        setTripCache(cached.data);
+        renderTrips(cached.data);
+        renderPagination(cached.meta);
+        return;
+    }
+
+    isLoading = true;
+    showLoadingOverlay();
+    disablePagination();
 
     // cancel previous request
     if (currentRequest) {
@@ -73,35 +96,29 @@ export async function filterTrips(page = 1) {
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            console.error("SERVER ERROR RESPONSE:", text);
             throw new Error(`Server error (${response.status})`);
         }
 
         const data = await response.json();
 
-        const tripsData = data?.data ?? data;
+        const tripsData = Array.isArray(data?.data) ? data.data : data;
 
         if (!Array.isArray(tripsData)) {
             throw new Error("Invalid response format");
         }
 
-        // ✅ Normalize & format date
+        /* =========================
+           NORMALIZE DATE
+        ========================= */
         const normalizedTrips = tripsData.map(t => {
             const rawDate = t.tripDate || t.date;
 
             let formattedDate = "";
 
             if (rawDate) {
-                const isoDate = rawDate.replace(" ", "T");
-                const parsed = new Date(isoDate);
-
+                const parsed = new Date(rawDate.replace(" ", "T"));
                 if (!isNaN(parsed)) {
-                    const day = parsed.getDate();
-                    const month = parsed.getMonth() + 1;
-                    const year = parsed.getFullYear();
-
-                    formattedDate = `${month}-${day}-${year}`;
+                    formattedDate = `${parsed.getMonth() + 1}-${parsed.getDate()}-${parsed.getFullYear()}`;
                 }
             }
 
@@ -111,24 +128,32 @@ export async function filterTrips(page = 1) {
             };
         });
 
-        // cache trips
-        setTripCache(normalizedTrips);
+        /* =========================
+           CACHE STORE
+        ========================= */
+        pageCache[cacheKey] = {
+            data: normalizedTrips,
+            meta: data
+        };
 
-        // render
+        /* =========================
+           RENDER
+        ========================= */
+        setTripCache(normalizedTrips);
         renderTrips(normalizedTrips);
 
-        // pagination
-        if (data?.current_page && data?.last_page) {
+        if (data && typeof data === "object" && "last_page" in data) {
             renderPagination(data);
         }
 
     } catch (error) {
-
-        // ignore aborted requests
-        if (error.name === "AbortError") return;
-
-        console.error("Filter error:", error);
-        showError(grid, error.message);
+        if (error.name !== "AbortError") {
+            console.error("Filter error:", error);
+        }
+    } finally {
+        isLoading = false;
+        hideLoadingOverlay();
+        enablePagination();
     }
 }
 
@@ -143,12 +168,13 @@ export function resetFilters() {
         if (el) el.value = "";
     });
 
+    pageCache = {}; // clear cache
     filterTrips(1);
 }
 
 
 /* =========================
-   AUTO LOAD (ON PAGE LOAD)
+   INIT FILTERS
 ========================= */
 export function initFilters() {
 
@@ -159,5 +185,16 @@ export function initFilters() {
         dateInput.value = today;
     }
 
+    // 🔁 attach debounce listeners
+    ["companyId", "vehicleNo", "tripDate", "tripMonth"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", () => debounceFilter(1));
+    });
+
     filterTrips(1);
 }
+
+
+/* =========================
+   GLOBAL ACCESS (IMPORTANT)
+========================= */
+window.filterTrips = filterTrips;

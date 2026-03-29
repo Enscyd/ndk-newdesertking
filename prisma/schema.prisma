@@ -157,4 +157,89 @@ model BillingItem {
   @@map("BillingItems")
 }
 
+///////////////// Purpose //////////////////////////////////////////////////////////////
+
+model Purpose {
+  id        Int       @id @default(autoincrement())
+  name      String
+
+  accounts  Account[]
+
+  @@map("purposes")
+}
+
+model Account {
+  id          Int       @id @default(autoincrement())
+  purposeId   Int
+  description String?
+  type        AccountType
+  amount      Float
+  date        DateTime
+
+  purpose     Purpose   @relation(fields: [purposeId], references: [id])
+
+  @@map("accounts")
+}
+
+enum AccountType {
+  INCOME
+  EXPENSE
+}
+
+model Suggestion {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("suggestions")
+}
+
+////////////////// WorkshopBill //////////////////////////////////////////////////
+
+model WorkshopBill {
+  id             Int      @id @default(autoincrement())
+  bill_no        String
+  vehicle_no     String
+  name           String?
+  date           DateTime
+  payment_status String
+  total_amount   Float
+
+  items          WorkshopItem[]
+
+  @@map("WorkshopBills")
+}
+
+model WorkshopItem {
+  id          Int    @id @default(autoincrement())
+  description String
+  price       Float
+  billId      Int
+
+  bill        WorkshopBill @relation(fields: [billId], references: [id])
+
+  @@map("WorkshopItems")
+}
+
+////////////// Employee Account/////////////////////////////////////////////////////////////
+
+model EmployeeAccount {
+  id          Int      @id @default(autoincrement())
+
+  employeeId  Int   // just a number, no relation
+
+  date        DateTime
+  type        EntryType
+  amount      Decimal  @db.Decimal(10,2)
+
+  remarks     String?
+
+  @@map("employee_accounts")
+}
+
+enum EntryType {
+  CREDIT
+  DEBIT
+}
+
+
 
