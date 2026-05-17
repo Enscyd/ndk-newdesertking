@@ -1,4 +1,3 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -6,196 +5,250 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  // The 'url' line has been removed from here
 }
 
-/////// Company /////////////////////////////////
+model invoice_counters {
+  id          Int      @id @default(autoincrement())
+  year        Int      @unique
+  last_number Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
 
-model Company {
-  id      Int    @id @default(autoincrement())
+model dashboardusers {
+  id        Int      @id @default(autoincrement())
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model password_reset_tokens {
+  email      String    @id
+  token      String
+  created_at DateTime?
+}
+
+model sessions {
+  id            String  @id
+  user_id       BigInt?
+  ip_address    String? @db.VarChar(45)
+  user_agent    String? @db.Text
+  payload       String  @db.LongText
+  last_activity Int
+
+  @@index([user_id])
+  @@index([last_activity])
+}
+
+model cache {
+  key        String @id
+  value      String @db.MediumText
+  expiration Int
+
+  @@index([expiration])
+}
+
+model cache_locks {
+  key        String @id
+  owner      String
+  expiration Int
+
+  @@index([expiration])
+}
+
+model jobs {
+  id           BigInt @id @default(autoincrement())
+  queue        String
+  payload      String @db.LongText
+  attempts     Int    @db.TinyInt
+  reserved_at  Int?
+  available_at Int
+  created_at   Int
+
+  @@index([queue])
+}
+
+model job_batches {
+  id             String  @id
+  name           String
+  total_jobs     Int
+  pending_jobs   Int
+  failed_jobs    Int
+  failed_job_ids String  @db.LongText
+  options        String? @db.MediumText
+  cancelled_at   Int?
+  created_at     Int
+  finished_at    Int?
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement())
+  uuid       String   @unique
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now())
+}
+
+model sparepart {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  part_number        String              @unique
+  category_id        Int?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime
+  sparepart_category sparepart_category? @relation(fields: [category_id], references: [id])
+  sparepart_stock    sparepart_stock[]
+
+  @@index([category_id], map: "sparepart_category_id_fkey")
+}
+
+model sparepart_category {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  sparepart   sparepart[]
+}
+
+model sparepart_stock {
+  id                 Int                 @id @default(autoincrement())
+  sparepart_id       Int
+  supplier_id        Int?
+  type               String
+  quantity           Int
+  note               String?
+  created_at         DateTime            @default(now())
+  sparepart          sparepart           @relation(fields: [sparepart_id], references: [id])
+  sparepart_supplier sparepart_supplier? @relation(fields: [supplier_id], references: [id])
+
+  @@index([sparepart_id], map: "sparepart_stock_sparepart_id_fkey")
+  @@index([supplier_id], map: "sparepart_stock_supplier_id_fkey")
+}
+
+model sparepart_supplier {
+  id              Int               @id @default(autoincrement())
+  name            String
+  phone           String?
+  address         String?
+  sparepart_stock sparepart_stock[]
+}
+
+model accounts {
+  id          Int           @id @default(autoincrement())
+  purposeId   Int
+  description String?
+  type        Accounts_type
+  amount      Float
+  date        DateTime
+
+  @@index([purposeId], map: "accounts_purposeId_fkey")
+}
+
+model billingitems {
+  id            Int      @id @default(autoincrement())
+  billingId     Int
+  tripId        Int
+  description   String
+  vehicleNo     String
+  quantity      Float
+  rent          Float
+  taxableAmount Float
+  vat           Float
+  totalAmount   Float
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+
+  @@index([billingId], map: "BillingItems_billingId_idx")
+  @@index([tripId], map: "BillingItems_tripId_idx")
+}
+
+model billings {
+  id            Int                    @id @default(autoincrement())
+  invoiceNo     String                 @unique(map: "Billings_invoiceNo_key")
+  companyId     Int
+  date          DateTime               @default(now())
+  billImage     String?
+  grandTotal    Float
+  paymentStatus Billings_paymentStatus @default(UNPAID)
+  created_at    DateTime               @default(now())
+  updated_at    DateTime
+
+  @@index([companyId], map: "Billings_companyId_idx")
+}
+
+model companies {
+  id      Int     @id @default(autoincrement())
   name    String
   address String?
-
-  @@map("Companies")
 }
 
-/////// Destination /////////////////////////////
-
-model Destination {
+model destinations {
   id   Int    @id @default(autoincrement())
   name String
-
-  @@map("Destinations")
 }
 
-////// Trucks //////////////////////////////////
-
-model Truck {
-  id   Int    @id @default(autoincrement())
-  truckNumber String
-
-  @@map("Trucks")
+model employee_accounts {
+  id         Int                   @id @default(autoincrement())
+  employeeId Int
+  month      Int
+  date       DateTime
+  type       EmployeeAccounts_type
+  amount     Decimal               @db.Decimal(10, 2)
+  remarks    String?
 }
 
-/////// Employee //////////////////////////////
-
-model Employee {
+model employees {
   id              Int     @id @default(autoincrement())
   employeeName    String
   employeePhoneNo String?
-
-  @@map("Employees")
 }
 
-//////// Trip ///////////////////////////////////
+model expenses {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  truckId     Int
+  expenseDate DateTime
+  category    String
+  details     String?
+  amount      Float
+  image       String?
+  createdAt   DateTime @default(now())
+}
 
-model Trip {
+model purposes {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model suggestions {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model trips {
   id            Int      @id @default(autoincrement())
   companyId     Int
   destinationId Int
   employeeId    Int
   truckId       Int
-
   tripType      String
   driverAmount  Float?
-
   tripDate      DateTime
   tripAmount    Float
-
   isOmani       String
   omaniName     String?
   omaniAmount   Float?
-
   image         String?
-
-  @@map("Trips")
 }
 
-//////// Expense ///////////////////////////////////
-
-model Expense {
-  id          Int      @id @default(autoincrement())
-
-  employeeId  Int
-  truckId     Int
-
-  expenseDate DateTime
-
-  category    String
-  details     String?
-
-  amount      Float
-
-  image       String?
-
-  createdAt   DateTime @default(now())
-
-  @@map("Expenses")
+model trucks {
+  id          Int    @id @default(autoincrement())
+  truckNumber String
 }
 
-////////////// Invoice Counter ///////////////////////////////////////////////////////
-
-model InvoiceCounter {
-  id          Int      @id @default(autoincrement())
-  year        Int      @unique
-  last_number Int      @default(0)
-
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("invoice_counters")
-}
-
-///////////////// Billing //////////////////////////////////////////////////////////////
-
-enum PaymentStatus {
-  PAID
-  UNPAID
-}
-
-model Billing {
-  id            Int           @id @default(autoincrement())
-  invoiceNo     String        @unique
-  companyId     Int
-  date          DateTime      @default(now())
-  billImage     String?
-  grandTotal    Float
-
-  paymentStatus PaymentStatus @default(UNPAID) 
-
-  items         BillingItem[]
-
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-
-  @@index([companyId])
-  @@map("Billings")
-}
-
-model BillingItem {
-  id            Int     @id @default(autoincrement())
-  billingId     Int
-  tripId        Int
-
-  description   String
-  vehicleNo     String
-
-  quantity      Float
-  rent          Float
-
-  taxableAmount Float
-  vat           Float
-  totalAmount   Float
-
-  billing       Billing @relation(fields: [billingId], references: [id], onDelete: Cascade)
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  @@index([billingId])
-  @@index([tripId])    
-  @@map("BillingItems")
-}
-
-///////////////// Purpose //////////////////////////////////////////////////////////////
-
-model Purpose {
-  id        Int       @id @default(autoincrement())
-  name      String
-
-  accounts  Account[]
-
-  @@map("purposes")
-}
-
-model Account {
-  id          Int       @id @default(autoincrement())
-  purposeId   Int
-  description String?
-  type        AccountType
-  amount      Float
-  date        DateTime
-
-  purpose     Purpose   @relation(fields: [purposeId], references: [id])
-
-  @@map("accounts")
-}
-
-enum AccountType {
-  INCOME
-  EXPENSE
-}
-
-model Suggestion {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  @@map("suggestions")
-}
-
-////////////////// WorkshopBill //////////////////////////////////////////////////
-
-model WorkshopBill {
+model workshopbills {
   id             Int      @id @default(autoincrement())
   bill_no        String
   vehicle_no     String
@@ -203,43 +256,28 @@ model WorkshopBill {
   date           DateTime
   payment_status String
   total_amount   Float
-
-  items          WorkshopItem[]
-
-  @@map("WorkshopBills")
 }
 
-model WorkshopItem {
+model workshopitems {
   id          Int    @id @default(autoincrement())
   description String
   price       Float
   billId      Int
 
-  bill        WorkshopBill @relation(fields: [billId], references: [id])
-
-  @@map("WorkshopItems")
+  @@index([billId], map: "WorkshopItems_billId_fkey")
 }
 
-////////////// Employee Account/////////////////////////////////////////////////////////////
-
-model EmployeeAccount {
-  id          Int      @id @default(autoincrement())
-
-  employeeId  Int   // just a number, no relation
-
-  date        DateTime
-  type        EntryType
-  amount      Decimal  @db.Decimal(10,2)
-
-  remarks     String?
-
-  @@map("employee_accounts")
+enum Accounts_type {
+  INCOME
+  EXPENSE
 }
 
-enum EntryType {
+enum EmployeeAccounts_type {
   CREDIT
   DEBIT
 }
 
-
-
+enum Billings_paymentStatus {
+  PAID
+  UNPAID
+}

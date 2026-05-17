@@ -25,9 +25,13 @@ use App\Http\Controllers\EmployeeAccountController;
    LANDING
 ========================= */
 
+use App\Http\Controllers\DashboardController;
+
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 
 /* =========================
@@ -71,8 +75,10 @@ Route::delete('/truck/{id}',[TruckController::class,'destroy'])->name('truck.del
 
 
 /* =========================
-   EMPLOYEE
+   EMPLOYEE / DRIVER
 ========================= */
+
+Route::get('/driver', [EmployeeController::class,'index'])->name('driver.index');
 
 Route::get('/employees',[EmployeeController::class,'index'])->name('employee.index');
 
