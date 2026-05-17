@@ -45,6 +45,12 @@ Route::get('/storage-file/{path}', function ($path) {
 })->where('path', '.*');
 
 /* =========================
+   DRIVER ROUTES
+========================= */
+Route::get('/driver', [TripController::class, 'driverPage'])->name('driver.page');
+Route::post('/driver/trip', [TripController::class, 'driverStore'])->name('driver.trip.store');
+
+/* =========================
    PROTECTED DASHBOARD ROUTES
 ========================= */
 Route::middleware(['dashboard.auth'])->group(function () {
@@ -107,8 +113,6 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     Route::delete('/trip/{id}',[TripController::class,'destroy'])->name('trip.delete');
     Route::get('/fetch-trips',[TripController::class,'fetchTrips'])->name('fetchTrips');
     Route::get('/trip/pdf', [TripController::class,'downloadPDF'])->name('trip.pdf');
-    Route::get('/driver', [TripController::class, 'driverPage'])->name('driver.page');
-    Route::post('/driver/trip', [TripController::class, 'driverStore'])->name('driver.trip.store');
 
     /* =========================
        EXPENSE
