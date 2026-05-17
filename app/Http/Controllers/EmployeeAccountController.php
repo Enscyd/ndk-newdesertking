@@ -10,173 +10,180 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class EmployeeAccountController extends Controller
 {
-
-    public function index(Request $request)
+    public function index()
     {
         $employees = Employee::all();
 
-        // No pre-loading needed (AJAX handles data)
-        $entries = collect();
-        $credits = 0;
-        $debits  = 0;
-        $net     = 0;
-
-        return view('employee_accounts.index', compact(
-            'employees','entries','credits','debits','net'
-        ));
-    }
-
-
-    public function store(Request $request)
-    {
-        try {
-
-            EmployeeAccount::create([
-                'employeeId' => $request->employeeId,
-                'date'       => Carbon::parse($request->date)->format('Y-m-d'),
-                'type'       => $request->type,
-                'amount'     => $request->amount,
-                'remarks'    => $request->remarks,
-            ]);
-
-            return response()->json(['success' => true]);
-
-        } catch (\Exception $e) {
-
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-
-    public function filter(Request $request)
-    {
-        $employeeId = $request->employeeId;
-        $month      = $request->month;
-
-        $startDate = null;
-        $endDate   = null;
-
-        if ($month) {
-            try {
-                $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-                $endDate   = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
-            } catch (\Exception $e) {
-                return response()->json([
-                    'error' => 'Invalid month format'
-                ], 400);
-            }
-        }
-
-        // ================= GET ALL DATA (IMPORTANT) =================
-        $query = EmployeeAccount::query();
-
-        if ($employeeId) {
-            $query->where('employeeId', $employeeId);
-        }
-
-        $allEntries = $query->orderBy('date', 'asc')->get();
-
-        // ================= RUNNING BALANCE =================
-        $balance = 0;
-
-        foreach ($allEntries as $entry) {
-
-            if ($entry->type === 'CREDIT') {
-                $balance += $entry->amount;
-            } else {
-                $balance -= $entry->amount;
-            }
-
-            // Attach dynamic field
-            $entry->running_balance = $balance;
-        }
-
-        // ================= FILTER MONTH =================
-        $entries = $allEntries;
-
-        if ($startDate && $endDate) {
-            $entries = $allEntries->filter(function ($item) use ($startDate, $endDate) {
-                return Carbon::parse($item->date)->between($startDate, $endDate);
-            })->values();
-        }
-
-        // ================= SUMMARY =================
-        $credits = $entries->where('type', 'CREDIT')->sum('amount');
-        $debits  = $entries->where('type', 'DEBIT')->sum('amount');
-        $net     = $credits - $debits;
-
-        return response()->json([
-            'entries' => $entries,
-            'credits' => $credits,
-            'debits'  => $debits,
-            'net'     => $net
+        return view('employee_accounts.index', [
+            'employees' => $employees,
+            'entries' => collect(),
+            'credits' => 0,
+            'debits' => 0,
+            'net' => 0
         ]);
     }
 
-
-    public function destroy($id)
+    // ================= STORE =================
+    public function store(Request $request)
     {
+        $request->validate([
+            'employeeId' => 'required|exists:employees,id',
+            'month' => 'required|integer|min:1|max:12',
+            'date' => 'required|date',
+            'type' => 'required|in:CREDIT,DEBIT',
+            'amount' => 'required|numeric|min:0.01',
+            'remarks' => 'nullable|string|max:255'
+        ]);
+
         try {
-
-            $entry = EmployeeAccount::findOrFail($id);
-            $entry->delete();
-
-            return response()->json(['success' => true]);
-
-        } catch (\Exception $e) {
+            EmployeeAccount::create([
+                'employeeId' => (int) $request->employeeId,
+                'month' => (int) $request->month,
+                'date' => Carbon::parse($request->date)->format('Y-m-d'),
+                'type' => $request->type,
+                'amount' => $request->amount,
+                'remarks' => $request->remarks,
+            ]);
 
             return response()->json([
-                'error' => $e->getMessage()
+                'success' => true,
+                'message' => 'Entry saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Save failed: ' . $e->getMessage()
             ], 500);
         }
     }
 
+    // ================= FILTER =================
+    public function filter(Request $request)
+    {
+        try {
+            $query = EmployeeAccount::query();
 
-public function pdf(Request $request)
-{
-    $employeeId = $request->employeeId;
-    $month      = $request->month;
+            if ($request->filled('employeeId')) {
+                $query->where('employeeId', (int) $request->employeeId);
+            }
 
-    if (!$employeeId || !$month) {
-        return back()->with('error', 'Employee and Month required');
-    }
+            if ($request->filled('month')) {
+                $query->where('month', (int) $request->month);
+            }
 
-    $employee = Employee::findOrFail($employeeId);
+            $entries = $query
+                ->orderBy('date', 'asc')
+                ->get();
 
-    $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-    $endDate   = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+            $balance = 0;
 
-    $entries = EmployeeAccount::where('employeeId', $employeeId)
-        ->whereBetween('date', [$startDate, $endDate])
-        ->orderBy('date', 'asc')
-        ->get();
+            foreach ($entries as $entry) {
+                $balance += $entry->type === 'CREDIT'
+                    ? $entry->amount
+                    : -$entry->amount;
 
-    $credits = $entries->where('type', 'CREDIT')->sum('amount');
-    $debits  = $entries->where('type', 'DEBIT')->sum('amount');
-    $net     = $credits - $debits;
+                $entry->running_balance = $balance;
+            }
 
-    // OPTIONAL: Running balance inside PDF
-    $balance = 0;
-    foreach ($entries as $e) {
-        if ($e->type == 'CREDIT') {
-            $balance += $e->amount;
-        } else {
-            $balance -= $e->amount;
+            $credits = $entries->where('type', 'CREDIT')->sum('amount');
+            $debits = $entries->where('type', 'DEBIT')->sum('amount');
+            $net = $credits - $debits;
+
+            return response()->json([
+                'entries' => $entries,
+                'credits' => $credits,
+                'debits' => $debits,
+                'net' => $net
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Filter failed: ' . $e->getMessage()
+            ], 500);
         }
-        $e->running_balance = $balance;
     }
 
-    $pdf = Pdf::loadView('employee_accounts.pdf', [
-        'employee' => $employee,
-        'entries'  => $entries,
-        'credits'  => $credits,
-        'debits'   => $debits,
-        'net'      => $net,
-        'month'    => $month
-    ]);
+    // ================= DELETE =================
+    public function destroy($id)
+    {
+        try {
+            $entry = EmployeeAccount::findOrFail($id);
+            $entry->delete();
 
-    return $pdf->download('salary-slip-'.$employee->employeeName.'.pdf');
-}
+            return response()->json([
+                'success' => true,
+                'message' => 'Entry deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Delete failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ================= PDF =================
+    public function pdf(Request $request)
+    {
+        $request->validate([
+            'employeeId' => 'required|exists:employees,id',
+            'month' => 'nullable'
+        ]);
+
+        try {
+            $employeeId = (int) $request->employeeId;
+            $month = $request->month ? (int) $request->month : null;
+
+            $employee = Employee::findOrFail($employeeId);
+
+            $query = EmployeeAccount::where('employeeId', $employeeId);
+
+            if ($month) {
+                $query->where('month', $month);
+            }
+
+            $entries = $query
+                ->orderBy('date', 'asc')
+                ->get();
+
+            $credits = $entries->where('type', 'CREDIT')->sum('amount');
+            $debits = $entries->where('type', 'DEBIT')->sum('amount');
+            $net = $credits - $debits;
+
+            $balance = 0;
+
+            foreach ($entries as $entry) {
+                $balance += $entry->type === 'CREDIT'
+                    ? $entry->amount
+                    : -$entry->amount;
+
+                $entry->running_balance = $balance;
+            }
+
+            $monthName = $month
+                ? Carbon::create()->month((int) $month)->format('F')
+                : 'All Months';
+
+            $pdf = Pdf::loadView('employee_accounts.pdf', [
+                'employee' => $employee,
+                'entries' => $entries,
+                'credits' => $credits,
+                'debits' => $debits,
+                'net' => $net,
+                'monthName' => $monthName
+            ]);
+
+            $fileName = 'salary-slip-' . $employee->employeeName;
+
+            if ($month) {
+                $fileName .= '-' . strtolower($monthName);
+            }
+
+            $fileName .= '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Exception $e) {
+            return back()->with(
+                'error',
+                'PDF generation failed: ' . $e->getMessage()
+            );
+        }
+    }
 }

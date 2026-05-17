@@ -225,7 +225,9 @@ model WorkshopItem {
 model EmployeeAccount {
   id          Int      @id @default(autoincrement())
 
-  employeeId  Int   // just a number, no relation
+  employeeId  Int
+
+  month       Int      // 1 = Jan, 2 = Feb, 3 = Mar
 
   date        DateTime
   type        EntryType
@@ -239,6 +241,64 @@ model EmployeeAccount {
 enum EntryType {
   CREDIT
   DEBIT
+}
+
+
+////////////// SparePart /////////////////////////////////////////////////////////////////////////
+
+model sparepart_category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+
+  spareparts  sparepart[]
+}
+
+model sparepart_supplier {
+  id        Int     @id @default(autoincrement())
+  name      String
+  phone     String?
+  address   String?
+
+  stocks    sparepart_stock[]
+}
+
+model sparepart {
+  id           Int      @id @default(autoincrement())
+  name         String
+  part_number  String   @unique
+  category_id  Int?
+
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  category     sparepart_category? @relation(fields: [category_id], references: [id])
+  stocks       sparepart_stock[]
+}
+
+model sparepart_stock {
+  id             Int      @id @default(autoincrement())
+  sparepart_id   Int
+  supplier_id    Int?
+  type           String   // IN / OUT
+  quantity       Int
+  note           String?
+  created_at     DateTime @default(now())
+
+  sparepart      sparepart @relation(fields: [sparepart_id], references: [id])
+  supplier       sparepart_supplier? @relation(fields: [supplier_id], references: [id])
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
+model DashboardUser {
+  id        Int      @id @default(autoincrement())
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("DashboardUsers")
 }
 
 

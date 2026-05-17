@@ -320,4 +320,76 @@ class TripController extends Controller
         return $pdf->download('trip-report-'.date('Y-m-d').'.pdf');
     }
 
+public function driverStore(Request $request)
+{
+    $request->validate([
+        'companyId'=>'required|exists:companies,id',
+        'destinationId'=>'required|exists:destinations,id',
+        'employeeId'=>'required|exists:employees,id',
+        'truckId'=>'required|exists:trucks,id',
+        'tripType'=>'required|in:Go Trip,Return Trip',
+        'tripDate'=>'required|date',
+        'tripAmount'=>'required|numeric|min:0',
+        'driverAmount'=>'nullable|numeric|min:0',
+        'isOmani'=>'required|in:Yes,No',
+        'omaniName'=>'nullable|string|max:255',
+        'omaniAmount'=>'nullable|numeric|min:0',
+        'image'=>'nullable|image|max:2048'
+    ]);
+
+    $imagePath = null;
+
+    if($request->hasFile('image')){
+        $image = $request->file('image');
+        $imageName = time().'_'.$image->getClientOriginalName();
+        $image->storeAs('trips',$imageName,'public');
+        $imagePath = 'trips/'.$imageName;
+    }
+
+    // clean data
+    if($request->isOmani=="No"){
+        $request->merge([
+            'omaniName'=>null,
+            'omaniAmount'=>null
+        ]);
+    }
+
+    if($request->tripType=="Return Trip"){
+        $request->merge([
+            'driverAmount'=>null
+        ]);
+    }
+
+    // save
+    Trip::create([
+        'companyId'=>$request->companyId,
+        'destinationId'=>$request->destinationId,
+        'employeeId'=>$request->employeeId,
+        'truckId'=>$request->truckId,
+        'tripType'=>$request->tripType,
+        'driverAmount'=>$request->driverAmount ?? null,
+        'tripDate'=>$request->tripDate,
+        'tripAmount'=>$request->tripAmount,
+        'isOmani'=>$request->isOmani,
+        'omaniName'=>$request->omaniName ?? null,
+        'omaniAmount'=>$request->omaniAmount ?? null,
+        'image'=>$imagePath
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Trip saved successfully'
+    ]);
+}
+
+public function driverPage()
+{
+    return view('driver.drive', [
+        'companies' => \App\Models\Company::all(),
+        'destinations' => \App\Models\Destination::all(),
+        'employees' => \App\Models\Employee::all(),
+        'trucks' => \App\Models\Truck::all(),
+    ]);
+}
+
 }

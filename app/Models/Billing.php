@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Billing extends Model
 {
-    protected $table = 'Billings'; // ✅ MUST match schema
+    protected $table = 'billings'; // ✅ MUST match schema
 
     protected $fillable = [
         'invoiceNo',

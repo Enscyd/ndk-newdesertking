@@ -25,7 +25,7 @@
     <!-- IMAGE -->
     <td class="p-4 border text-center">
         @if($inv->billImage)
-            <img src="{{ asset('storage/'.$inv->billImage) }}"
+            <img src="{{ asset($inv->billImage) }}"
                 class="w-14 h-14 object-cover rounded-lg shadow cursor-pointer hover:scale-105 transition"
                 onclick="openImage(this.src)">
         @else
@@ -56,6 +56,15 @@
                 </span>
 
             @endif
+
+            <!-- NEW ADD TRIP BUTTON -->
+            <button 
+                type="button"
+                class="addTripBtn bg-purple-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-purple-700 transition shadow-sm"
+                data-id="{{ $inv->id }}"
+                data-invoice="{{ $inv->invoiceNo }}">
+                Add Trip
+            </button>
 
             <button 
                 class="deleteInvoiceBtn bg-red-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-red-700 transition shadow-sm"
@@ -137,19 +146,19 @@
     </td>
 
     <td class="p-3 border text-center">
-<button 
-    type="button"
-    class="deleteItemBtn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition"
-    data-id="{{ $item->id }}">
-    Delete
-</button>
+        <button 
+            type="button"
+            class="deleteItemBtn bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition"
+            data-id="{{ $item->id }}">
+            Delete
+        </button>
 
-<button 
-    type="button"
-    class="editItemBtn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition"
-    data-id="{{ $item->id }}">
-    Edit
-</button>
+        <button 
+            type="button"
+            class="editItemBtn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition"
+            data-id="{{ $item->id }}">
+            Edit
+        </button>
     </td>
 
 </tr>

@@ -12,11 +12,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- =========================
-         🔥 AJAX URLS (UPDATED)
+         🔥 AJAX URLS + DROPDOWN DATA
     ========================== -->
     <script>
         window.filterUrl = "{{ route('billing.filter') }}";
-        window.updateItemUrl = "{{ route('billing.item.update', ':id') }}"; // ✅ NEW
+        window.updateItemUrl = "{{ route('billing.item.update', ':id') }}";
+        window.storeTripUrl = "{{ route('billing.store') }}";
+
+        // ✅ Add Trip dropdown data
+        window.destinations = @json($destinations);
+        window.trucks = @json($trucks);
     </script>
 
     <!-- =========================
@@ -55,6 +60,14 @@
             class="border p-2 rounded"
         >
 
+        <!-- MONTH -->
+<input 
+    type="month" 
+    name="month"
+    value="{{ date('Y-m') }}"
+    class="border p-2 rounded"
+>
+
         <!-- Clear -->
         <button 
             id="clearFilter"
@@ -81,7 +94,6 @@
                     <th class="p-3 border">Action</th>
                 </tr>
             </thead>
-
             <!-- BODY -->
             <tbody id="invoiceTable">
 

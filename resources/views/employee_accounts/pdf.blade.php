@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="utf-8">
@@ -14,7 +13,6 @@
         position: relative;
     }
 
-    /* WATERMARK */
     .watermark {
         position: fixed;
         top: 45%;
@@ -27,7 +25,6 @@
         white-space: nowrap;
     }
 
-    /* HEADER */
     .header {
         text-align: center;
         border-bottom: 2px solid #000;
@@ -45,7 +42,6 @@
         margin-top: 3px;
     }
 
-    /* INFO TABLE */
     .info-table {
         width: 100%;
         margin-bottom: 15px;
@@ -71,7 +67,6 @@
         padding-top: 5px;
     }
 
-    /* DATA TABLE */
     .data-table {
         width: 100%;
         border-collapse: collapse;
@@ -89,7 +84,6 @@
         text-align: center;
     }
 
-    /* SUMMARY */
     .summary-table {
         width: 45%;
         margin-top: 20px;
@@ -115,7 +109,6 @@
         font-size: 13px;
     }
 
-    /* FOOTER */
     .footer-table {
         width: 100%;
         margin-top: 70px;
@@ -134,18 +127,12 @@
         margin-left: auto;
         margin-right: auto;
     }
-
 </style>
-
 </head>
 
 <body>
 
-<!-- WATERMARK -->
-
 <div class="watermark">NDK</div>
-
-<!-- HEADER -->
 
 <div class="header">
     <div class="company">NDK Company</div>
@@ -153,25 +140,24 @@
 </div>
 
 <!-- INFO -->
-
 <table class="info-table">
     <tr>
         <td class="left">
             <strong>Employee:</strong> {{ $employee->employeeName }}
         </td>
         <td class="right">
-            <strong>Date:</strong> {{ date('d/m/Y') }}
+            <strong>Generated:</strong> {{ date('d/m/Y') }}
         </td>
     </tr>
     <tr>
         <td colspan="2" class="center">
-            <strong>Month:</strong> {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}
+            <strong>Salary Month:</strong> {{ $monthName }}
         </td>
     </tr>
 </table>
 
 <!-- DATA TABLE -->
-
+<!-- DATA TABLE -->
 <table class="data-table">
     <thead>
         <tr>
@@ -182,40 +168,41 @@
         </tr>
     </thead>
 
-```
-<tbody>
-    @foreach($entries as $e)
-    <tr>
-        <td>{{ \Carbon\Carbon::parse($e->date)->format('d/m/Y') }}</td>
-        <td>{{ $e->type }}</td>
-        <td>{{ number_format($e->amount,2) }}</td>
-        <td>{{ $e->remarks }}</td>
-    </tr>
-    @endforeach
-</tbody>
-```
-
+    <tbody>
+        @forelse($entries as $e)
+            <tr>
+                <td>
+                    {{ \Carbon\Carbon::parse($e->date)->format('d/m/Y') }}
+                </td>
+                <td>{{ $e->type }}</td>
+                <td>{{ number_format($e->amount, 2) }}</td>
+                <td>{{ $e->remarks ?? '-' }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4">No entries found</td>
+            </tr>
+        @endforelse
+    </tbody>
 </table>
 
 <!-- SUMMARY -->
-
 <table class="summary-table">
     <tr>
         <td class="label"><strong>Total Credit:</strong></td>
-        <td class="value">{{ number_format($credits,2) }}</td>
+        <td class="value">{{ number_format($credits, 2) }}</td>
     </tr>
     <tr>
         <td class="label"><strong>Total Debit:</strong></td>
-        <td class="value">{{ number_format($debits,2) }}</td>
+        <td class="value">{{ number_format($debits, 2) }}</td>
     </tr>
     <tr class="net-row">
         <td class="label"><strong>Net Salary:</strong></td>
-        <td class="value">{{ number_format($net,2) }}</td>
+        <td class="value">{{ number_format($net, 2) }}</td>
     </tr>
 </table>
 
 <!-- FOOTER -->
-
 <table class="footer-table">
     <tr>
         <td>

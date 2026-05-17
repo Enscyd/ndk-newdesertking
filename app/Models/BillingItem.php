@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BillingItem extends Model
 {
-    protected $table = 'BillingItems'; // ✅ VERY IMPORTANT
+    protected $table = 'billingitems'; // ✅ VERY IMPORTANT
 
     protected $fillable = [
         'billingId',

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Expense extends Model
 {
 
-protected $table = "Expenses";
+protected $table = "expenses";
 
 public $timestamps = false;
 

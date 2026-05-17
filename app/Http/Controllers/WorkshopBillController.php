@@ -32,7 +32,26 @@ class WorkshopBillController extends Controller
 
         $bills = $query->orderBy('id', 'desc')->get();
 
-        return view('workshop.create', compact('bills'));
+        /**
+         * Auto next bill number
+         * Format: NDK-2026-001
+         */
+        $year = date('Y');
+
+        $lastBill = WorkshopBill::where('bill_no', 'like', "NDK-$year-%")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastBill) {
+            $lastNumber = (int) substr($lastBill->bill_no, -3);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $nextBillNo = 'NDK-' . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('workshop.create', compact('bills', 'nextBillNo'));
     }
 
     /**
@@ -41,7 +60,6 @@ class WorkshopBillController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'bill_no' => 'required|string|max:50',
             'vehicle_no' => 'required|string|max:50',
             'date' => 'required|date',
             'payment_status' => 'required|in:PAID,UNPAID',
@@ -71,9 +89,29 @@ class WorkshopBillController extends Controller
                 $total += (float) $item['price'];
             }
 
+            /**
+             * Auto bill number generate
+             * Format: NDK-2026-001
+             */
+            $year = date('Y');
+
+            $lastBill = WorkshopBill::where('bill_no', 'like', "NDK-$year-%")
+                ->lockForUpdate()
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastBill) {
+                $lastNumber = (int) substr($lastBill->bill_no, -3);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            $billNo = 'NDK-' . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
             // Create bill
             $bill = WorkshopBill::create([
-                'bill_no' => $request->bill_no,
+                'bill_no' => $billNo,
                 'vehicle_no' => $request->vehicle_no,
                 'name' => $request->name,
                 'date' => $request->date,
@@ -143,10 +181,7 @@ class WorkshopBillController extends Controller
         try {
             $bill = WorkshopBill::findOrFail($id);
 
-            // Delete items first
             WorkshopItem::where('billId', $bill->id)->delete();
-
-            // Delete bill
             $bill->delete();
 
             DB::commit();
@@ -226,13 +261,13 @@ class WorkshopBillController extends Controller
     {
         $bill = WorkshopBill::with('items')->findOrFail($id);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('workshop.pdf', compact('bill'));
+        $pdf = Pdf::loadView('workshop.pdf', compact('bill'));
 
         return $pdf->download('bill-' . $bill->bill_no . '.pdf');
     }
 
     /**
-     * Edit bill (optional - currently not used)
+     * Edit bill
      */
     public function edit($id)
     {
@@ -242,18 +277,33 @@ class WorkshopBillController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('workshop.create', compact('bill', 'bills'));
+        $year = date('Y');
+
+        $lastBill = WorkshopBill::where('bill_no', 'like', "NDK-$year-%")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastBill) {
+            $lastNumber = (int) substr($lastBill->bill_no, -3);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $nextBillNo = 'NDK-' . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('workshop.create', compact('bill', 'bills', 'nextBillNo'));
     }
 
-        public function itemSuggestions(Request $request)
-        {
-            $search = $request->query('q');
+    public function itemSuggestions(Request $request)
+    {
+        $search = $request->query('q');
 
-            $items = \DB::table('suggestions')
-                ->where('name', 'LIKE', "%{$search}%")
-                ->limit(10)
-                ->pluck('name'); 
+        $items = DB::table('suggestions')
+            ->where('name', 'LIKE', "%{$search}%")
+            ->limit(10)
+            ->pluck('name');
 
-            return response()->json($items);
-        }
+        return response()->json($items);
+    }
 }

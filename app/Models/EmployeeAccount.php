@@ -10,10 +10,11 @@ class EmployeeAccount extends Model
 
     protected $primaryKey = 'id';
 
-     public $timestamps = false;
+    public $timestamps = false;
 
     protected $fillable = [
         'employeeId',
+        'month',   // ✅ NEW FIELD ADDED
         'date',
         'type',
         'amount',
@@ -21,6 +22,7 @@ class EmployeeAccount extends Model
     ];
 
     protected $casts = [
+        'month'  => 'integer',   // ✅ NEW CAST
         'date'   => 'date',
         'amount' => 'decimal:2'
     ];
@@ -30,9 +32,18 @@ class EmployeeAccount extends Model
     | RELATION
     |--------------------------------------------------------------------------
     */
-
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employeeId', 'id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSOR (OPTIONAL)
+    |--------------------------------------------------------------------------
+    */
+    public function getMonthNameAttribute()
+    {
+        return \Carbon\Carbon::create()->month($this->month)->format('F');
     }
 }

@@ -1,209 +1,192 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NDK System</title>
 
-<!-- CSRF -->
-<meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Alpine -->
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Alpine -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-<!-- Styles -->
-<style>
-    .nav-item{
-        position:relative;
-        padding-bottom:4px;
-        white-space:nowrap;
-        cursor:pointer;
-    }
+    <style>
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-    .nav-item::after{
-        content:"";
-        position:absolute;
-        left:0;
-        bottom:0;
-        height:2px;
-        width:0%;
-        background:#14b8a6;
-        transition:.3s;
-    }
+        .nav-item {
+            position: relative;
+            cursor: pointer;
+            white-space: nowrap;
+        }
 
-    .nav-item:hover::after{
-        width:100%;
-    }
+        .nav-item:hover {
+            color: #14b8a6;
+        }
 
-    .nav-item.active{
-        color:#14b8a6;
-        font-weight:600;
-    }
+        summary {
+            list-style: none;
+            cursor: pointer;
+        }
 
-    .nav-item.active::after{
-        width:100%;
-    }
+        summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
 
-    #mobileMenu{
-        transform-origin:top;
-        transform:scaleY(0);
-        opacity:0;
-        transition:.25s;
-    }
-
-    #mobileMenu.open{
-        transform:scaleY(1);
-        opacity:1;
-    }
-
-    .navbar{
-        position:sticky;
-        top:0;
-        z-index:1000;
-    }
-</style>
-
-@stack('styles')
-
+    @stack('styles')
 </head>
-
 <body class="bg-gray-100">
 
-<!-- NAVBAR -->
+<nav x-data="{ mobileOpen: false }" class="navbar bg-gray-900 text-white shadow-lg">
+    <div class="w-full flex items-center justify-between h-16 px-4 md:px-6">
+        
+        <!-- Logo -->
+        <a href="/" class="text-xl md:text-2xl font-bold text-teal-400 hover:text-teal-300 transition">
+            NDK System
+        </a>
 
-<nav class="navbar bg-gray-900 text-white shadow">
+        <!-- Desktop Menu -->
+        <ul class="hidden md:flex space-x-6 ml-auto items-center">
 
-<div class="w-full flex items-center h-16 px-6">
+            <!-- Workshop -->
+            <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
+                <button>WorkShop Bills</button>
+                <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
+                    <li><a href="{{ route('workshop.create') }}" class="block px-4 py-2 hover:bg-gray-700">Workshop</a></li>
+                    <li><a href="{{ route('suggestion.index') }}" class="block px-4 py-2 hover:bg-gray-700">Suggestion</a></li>
+                </ul>
+            </li>
 
-    <!-- LOGO -->
- <a href="/" class="text-2xl font-bold text-teal-400 hover:text-teal-600 transition cursor-pointer">
-    NDK System
-</a>
+            <!-- Employee -->
+            <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
+                <button>Employee</button>
+                <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
+                    <li><a href="{{ route('employee.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Employee</a></li>
+                    <li><a href="{{ route('employee.accounts') }}" class="block px-4 py-2 hover:bg-gray-700">Accounts</a></li>
+                </ul>
+            </li>
 
-    <!-- DESKTOP MENU -->
-    <ul class="hidden md:flex space-x-8 ml-auto items-center">
+            <!-- Accounts -->
+            <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
+                <button>Accounts</button>
+                <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
+                    <li><a href="{{ route('purpose.index') }}" class="block px-4 py-2 hover:bg-gray-700">Purpose</a></li>
+                    <li><a href="{{ route('accounts.index') }}" class="block px-4 py-2 hover:bg-gray-700">Account Sheet</a></li>
+                </ul>
+            </li>
 
-        <!-- WORKSHOP -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>WorkShop Bills</button>
+            <!-- Bill Book -->
+            <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
+                <button>Bill Book</button>
+                <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
+                    <li><a href="{{ route('billing.create') }}" class="block px-4 py-2 hover:bg-gray-700">Billing Form</a></li>
+                    <li><a href="{{ route('billing.index') }}" class="block px-4 py-2 hover:bg-gray-700">Bill Book</a></li>
+                </ul>
+            </li>
 
-            <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
-                <li><a href="{{ route('workshop.create') }}" class="block px-4 py-2 hover:bg-gray-700">Workshop</a></li>
-                <li><a href="{{ route('suggestion.index') }}" class="block px-4 py-2 hover:bg-gray-700">Suggestion</a></li>
-            </ul>
-        </li>
+            <!-- Trips -->
+            <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
+                <button>Trips</button>
+                <ul x-show="open" x-transition class="absolute left-0 mt-2 w-56 bg-gray-800 rounded shadow-xl py-2">
+                    <li><a href="{{ route('company.add') }}" class="block px-4 py-2 hover:bg-gray-700">Add Company</a></li>
+                    <li><a href="{{ route('destination.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Destination</a></li>
+                    <li><a href="{{ route('truck.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Truck</a></li>
+                    <li><a href="{{ route('trip.index') }}" class="block px-4 py-2 hover:bg-gray-700">Trip Sheet</a></li>
+                    <li><a href="{{ route('expense.index') }}" class="block px-4 py-2 hover:bg-gray-700">Expense Sheet</a></li>
+                </ul>
+            </li>
 
-        <!-- EMPLOYEE -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>Employee</button>
+            <li>
+                <a href="{{ route('sparepart.index') }}" class="hover:text-teal-400">
+                    Spareparts
+                </a>
+            </li>
 
-            <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
-                <li><a href="{{ route('employee.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Employee</a></li>
-                <li><a href="{{ route('employee.accounts') }}" class="block px-4 py-2 hover:bg-gray-700">Accounts</a></li>
-            </ul>
-        </li>
+            <li>
+                <form method="POST" action="{{ route('dashboard.logout') }}">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-xl font-semibold">
+                        Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
 
-        <!-- ACCOUNTS -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>Accounts</button>
+        <!-- Mobile Button -->
+        <button @click="mobileOpen = !mobileOpen" class="md:hidden text-3xl">
+            ☰
+        </button>
+    </div>
 
-            <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
-                <li><a href="{{ route('purpose.index') }}" class="block px-4 py-2 hover:bg-gray-700">Purpose</a></li>
-                <li><a href="{{ route('accounts.index') }}" class="block px-4 py-2 hover:bg-gray-700">Account Sheet</a></li>
-            </ul>
-        </li>
+    <!-- Mobile Menu -->
+    <div x-show="mobileOpen" x-transition class="md:hidden bg-gray-800 px-4 pb-4 space-y-2">
 
-        <!-- BILL BOOK -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>Bill Book</button>
+        <details class="bg-gray-700 rounded-lg p-2">
+            <summary>Workshop Bills</summary>
+            <div class="mt-2 ml-4 space-y-2">
+                <a href="{{ route('workshop.create') }}" class="block">Workshop</a>
+                <a href="{{ route('suggestion.index') }}" class="block">Suggestion</a>
+            </div>
+        </details>
 
-            <ul x-show="open" x-transition class="absolute left-0 mt-2 w-48 bg-gray-800 rounded shadow-xl py-2">
-                <li><a href="{{ route('billing.create') }}" class="block px-4 py-2 hover:bg-gray-700">Billing Form</a></li>
-                <li><a href="{{ route('billing.index') }}" class="block px-4 py-2 hover:bg-gray-700">Bill Book</a></li>
-            </ul>
-        </li>
+        <details class="bg-gray-700 rounded-lg p-2">
+            <summary>Employee</summary>
+            <div class="mt-2 ml-4 space-y-2">
+                <a href="{{ route('employee.index') }}" class="block">Add Employee</a>
+                <a href="{{ route('employee.accounts') }}" class="block">Accounts</a>
+            </div>
+        </details>
 
-        <!-- TRIPS -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>Trips</button>
+        <details class="bg-gray-700 rounded-lg p-2">
+            <summary>Accounts</summary>
+            <div class="mt-2 ml-4 space-y-2">
+                <a href="{{ route('purpose.index') }}" class="block">Purpose</a>
+                <a href="{{ route('accounts.index') }}" class="block">Account Sheet</a>
+            </div>
+        </details>
 
-            <ul x-show="open" x-transition class="absolute left-0 mt-2 w-56 bg-gray-800 rounded shadow-xl py-2">
-                <li><a href="{{ route('company.add') }}" class="block px-4 py-2 hover:bg-gray-700">Add Company</a></li>
-                <li><a href="{{ route('destination.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Destination</a></li>
-                <li><a href="{{ route('truck.index') }}" class="block px-4 py-2 hover:bg-gray-700">Add Truck</a></li>
-                <li><a href="{{ route('trip.index') }}" class="block px-4 py-2 hover:bg-gray-700">Trip Sheet</a></li>
-                <li><a href="{{ route('expense.index') }}" class="block px-4 py-2 hover:bg-gray-700">Expense Sheet</a></li>
-            </ul>
-        </li>
+        <details class="bg-gray-700 rounded-lg p-2">
+            <summary>Bill Book</summary>
+            <div class="mt-2 ml-4 space-y-2">
+                <a href="{{ route('billing.create') }}" class="block">Billing Form</a>
+                <a href="{{ route('billing.index') }}" class="block">Bill Book</a>
+            </div>
+        </details>
 
-        <!-- SPAREPARTS -->
-        <li x-data="{open:false}" @mouseenter="open=true" @mouseleave="open=false" class="relative nav-item">
-            <button>Spareparts</button>
+        <details class="bg-gray-700 rounded-lg p-2">
+            <summary>Trips</summary>
+            <div class="mt-2 ml-4 space-y-2">
+                <a href="{{ route('company.add') }}" class="block">Add Company</a>
+                <a href="{{ route('destination.index') }}" class="block">Add Destination</a>
+                <a href="{{ route('truck.index') }}" class="block">Add Truck</a>
+                <a href="{{ route('trip.index') }}" class="block">Trip Sheet</a>
+                <a href="{{ route('expense.index') }}" class="block">Expense Sheet</a>
+            </div>
+        </details>
 
-            <ul x-show="open" x-transition class="absolute right-0 mt-2 w-56 bg-gray-800 rounded shadow-xl py-2">
-                
-                <li><a href="#" class="block px-4 py-2 hover:bg-gray-700">Stock</a></li>
-                <li><a href="#" class="block px-4 py-2 hover:bg-gray-700">Sale</a></li>
-                <li><a href="#" class="block px-4 py-2 hover:bg-gray-700">Report</a></li>
-            </ul>
-        </li>
+        <a href="{{ route('sparepart.index') }}" class="block bg-gray-700 rounded-lg p-2">
+            Spareparts
+        </a>
 
-    </ul>
-
-    <!-- MOBILE BUTTON -->
-    <button class="md:hidden ml-auto text-3xl" onclick="toggleMobileMenu()">☰</button>
-
-</div>
-
+        <form method="POST" action="{{ route('dashboard.logout') }}">
+            @csrf
+            <button type="submit" class="w-full bg-red-500 hover:bg-red-600 rounded-lg py-2">
+                Logout
+            </button>
+        </form>
+    </div>
 </nav>
 
-<!-- MOBILE MENU -->
-
-<div id="mobileMenu" class="hidden bg-gray-800 text-white p-4 md:hidden space-y-4">
-
-<details class="submenu">
-    <summary class="py-2">Trips</summary>
-
-    <ul class="ml-6 space-y-1">
-        <li><a href="{{ route('company.add') }}" class="block py-1">Add Company</a></li>
-        <li><a href="{{ route('destination.index') }}" class="block py-1">Add Destination</a></li>
-        <li><a href="{{ route('trip.index') }}" class="block py-1">Trip Sheet</a></li>
-        <li><a href="{{ route('expense.index') }}" class="block py-1">Expense Sheet</a></li>
-    </ul>
-</details>
-
-
-</div>
-
-<!-- MAIN CONTENT -->
-
-<div class="w-full p-6">
+<div class="w-full p-4 md:p-6">
     @yield('content')
 </div>
-
-<!-- GLOBAL JS -->
-
-<script>
-function toggleMobileMenu(){
-    const m = document.getElementById("mobileMenu");
-    m.classList.toggle("hidden");
-    setTimeout(()=>m.classList.toggle("open"),10);
-}
-
-document.querySelectorAll("#mobileMenu .submenu").forEach(el=>{
-    el.addEventListener("click",()=>{
-        document.querySelectorAll("#mobileMenu .submenu").forEach(other=>{
-            if(other!==el) other.removeAttribute("open");
-        });
-    });
-});
-</script>
-
-<!-- ✅ REQUIRED FOR PAGE SCRIPTS -->
 
 @stack('scripts')
 

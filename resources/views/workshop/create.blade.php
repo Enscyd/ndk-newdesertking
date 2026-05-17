@@ -65,7 +65,7 @@
         <form method="POST" action="{{ route('workshop.store') }}">
             @csrf
 
-            <input type="text" name="bill_no" placeholder="Bill No" class="input w-full mb-2" required>
+            <input type="text" name="bill_no" value="{{ $nextBillNo }}"class="input w-full mb-2" readonly>
             <input type="text" name="vehicle_no" placeholder="Vehicle No" class="input w-full mb-2" required>
             <input type="text" name="name" placeholder="Name" class="input w-full mb-2">
 
