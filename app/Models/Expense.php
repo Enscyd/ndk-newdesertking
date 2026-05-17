@@ -9,7 +9,9 @@ class Expense extends Model
 
 protected $table = "expenses";
 
-public $timestamps = false;
+public $timestamps = true;
+const CREATED_AT = 'createdAt';
+const UPDATED_AT = null;
 
 protected $fillable = [
 'employeeId',
@@ -18,7 +20,8 @@ protected $fillable = [
 'category',
 'details',
 'amount',
-'image'
+'image',
+'createdAt'
 ];
 
 

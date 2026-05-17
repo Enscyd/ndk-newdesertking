@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SparepartStock extends Model
+class SparePartStock extends Model
 {
     protected $table = 'sparepart_stock';
-
-    // ❗ Disable timestamps (important for Prisma tables)
-    public $timestamps = false;
+    
+    public $timestamps = false; // DB only has created_at
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'sparepart_id',
@@ -19,19 +21,13 @@ class SparepartStock extends Model
         'note'
     ];
 
-    /**
-     * Relationship: Stock belongs to Sparepart
-     */
     public function sparepart()
     {
-        return $this->belongsTo(Sparepart::class, 'sparepart_id');
+        return $this->belongsTo(SparePart::class, 'sparepart_id');
     }
 
-    /**
-     * Relationship: Stock belongs to Supplier
-     */
     public function supplier()
     {
-        return $this->belongsTo(SparepartSupplier::class, 'supplier_id');
+        return $this->belongsTo(SparePartSupplier::class, 'supplier_id');
     }
 }
