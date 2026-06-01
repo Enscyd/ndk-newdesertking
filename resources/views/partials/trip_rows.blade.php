@@ -110,7 +110,9 @@ Totals
 
 <td colspan="13" class="p-3 text-center">
 
-{{ $trips->links() }}
+<div class="pagination">
+    {{ $trips->links() }}
+</div>
 
 </td>
 

@@ -232,7 +232,9 @@
             to {{ $invoices->lastItem() ?? 0 }}
         </span>
 
-        {{ $invoices->links() }}
+        <div class="pagination">
+            {{ $invoices->links() }}
+        </div>
 
     </div>
 

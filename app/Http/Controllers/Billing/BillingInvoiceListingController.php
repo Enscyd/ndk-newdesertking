@@ -26,7 +26,8 @@ class BillingInvoiceListingController extends Controller
         'company:id,name',
         'items:id,billingId,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
     ])
-    ->whereDate('date', now()->toDateString())
+    ->whereMonth('date', now()->month)
+    ->whereYear('date', now()->year)
     ->latest()
     ->simplePaginate(10);
 

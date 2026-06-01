@@ -56,7 +56,6 @@
         <input 
             type="date" 
             name="date"
-            value="{{ date('Y-m-d') }}" 
             class="border p-2 rounded"
         >
 
