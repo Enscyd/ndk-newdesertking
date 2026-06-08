@@ -24,48 +24,65 @@ function openPrintModal(invoiceId, defaultDate) {
     const modal = document.getElementById('printDateModal');
     const input = document.getElementById('printDateInput');
 
+    if (!modal) return;
+
     if (input) {
         input.value = defaultDate || new Date().toISOString().split('T')[0];
     }
 
-    modal?.classList.remove('hidden');
-    modal?.classList.add('flex');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function closePrintModal() {
     pendingPrintId = null;
 
     const modal = document.getElementById('printDateModal');
-    modal?.classList.add('hidden');
-    modal?.classList.remove('flex');
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function getPrintUrl(invoiceId, date) {
+    const base = (window.printUrlBase || '/billing/print').replace(/\/$/, '');
+    return `${base}/${invoiceId}?date=${encodeURIComponent(date)}`;
 }
 
 document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.printInvoiceBtn');
-    if (!btn) return;
-
-    e.preventDefault();
-    openPrintModal(btn.dataset.id, btn.dataset.date);
-});
-
-document.getElementById('cancelPrintBtn')?.addEventListener('click', closePrintModal);
-
-document.getElementById('printDateModal')?.addEventListener('click', function(e) {
-    if (e.target.id === 'printDateModal') closePrintModal();
-});
-
-document.getElementById('confirmPrintBtn')?.addEventListener('click', function() {
-    if (!pendingPrintId) return;
-
-    const date = document.getElementById('printDateInput')?.value;
-    if (!date) {
-        alert('Please select a date');
+    const printBtn = e.target.closest('.printInvoiceBtn');
+    if (printBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        openPrintModal(printBtn.dataset.id, printBtn.dataset.date);
         return;
     }
 
-    const url = window.printUrl.replace(':id', pendingPrintId) + '?date=' + encodeURIComponent(date);
-    window.open(url, '_blank');
-    closePrintModal();
+    if (e.target.closest('#cancelPrintBtn')) {
+        e.preventDefault();
+        closePrintModal();
+        return;
+    }
+
+    if (e.target.closest('#confirmPrintBtn')) {
+        e.preventDefault();
+
+        if (!pendingPrintId) return;
+
+        const date = document.getElementById('printDateInput')?.value;
+        if (!date) {
+            alert('Please select a date');
+            return;
+        }
+
+        window.open(getPrintUrl(pendingPrintId, date), '_blank');
+        closePrintModal();
+        return;
+    }
+
+    if (e.target.id === 'printDateModal') {
+        closePrintModal();
+    }
 });
 
 

@@ -18,7 +18,7 @@
         window.filterUrl = "{{ route('billing.filter') }}";
         window.updateItemUrl = "{{ route('billing.item.update', ':id') }}";
         window.storeTripUrl = "{{ route('billing.store') }}";
-        window.printUrl = "{{ route('billing.print', ':id') }}";
+        window.printUrlBase = "{{ url('/billing/print') }}";
 
         // ✅ Add Trip dropdown data
         window.destinations = @json($destinations);
@@ -125,9 +125,9 @@
      PRINT DATE MODAL
 ========================= -->
 <div id="printDateModal"
-     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-[1100]">
 
-    <div class="bg-white rounded-lg shadow-lg p-6 w-80" onclick="event.stopPropagation()">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
         <h3 class="text-lg font-semibold mb-4">Print Invoice</h3>
         <label class="block text-sm text-gray-600 mb-1">Invoice Date</label>
         <input type="date" id="printDateInput" class="border p-2 rounded w-full mb-4">
@@ -149,6 +149,6 @@
 <!-- =========================
      JS FILE
 ========================= -->
-<script src="{{ asset('js/invoice-filter.js') }}"></script>
+<script src="{{ asset('js/invoice-filter.js') }}?v={{ filemtime(public_path('js/invoice-filter.js')) }}"></script>
 
 @endsection
