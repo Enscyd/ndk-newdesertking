@@ -22,12 +22,15 @@ class BillingInvoiceListingController extends Controller
     $destinations = \App\Models\Destination::select('id', 'name')->orderBy('name')->get();
     $trucks = \App\Models\Truck::select('id', 'truckNumber')->orderBy('truckNumber')->get();
 
+    // ✅ Default view shows bills CREATED this month.
+    // (Invoice `date` now reflects the trip date, which may be an earlier month,
+    //  so filtering on `date` would hide freshly created bills.)
     $invoices = Billing::with([
         'company:id,name',
         'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
     ])
-    ->whereMonth('date', now()->month)
-    ->whereYear('date', now()->year)
+    ->whereMonth('created_at', now()->month)
+    ->whereYear('created_at', now()->year)
     ->latest()
     ->simplePaginate(10);
 
