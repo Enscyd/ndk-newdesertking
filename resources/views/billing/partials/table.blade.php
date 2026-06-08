@@ -72,11 +72,13 @@
                 Delete
             </button>
 
-            <a href="{{ route('billing.print', $inv->id) }}" 
-               target="_blank"
-               class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition shadow-sm">
-               Print
-            </a>
+            <button
+                type="button"
+                class="printInvoiceBtn bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition shadow-sm"
+                data-id="{{ $inv->id }}"
+                data-date="{{ $inv->date ? \Carbon\Carbon::parse($inv->date)->format('Y-m-d') : '' }}">
+                Print
+            </button>
 
         </div>
     </td>

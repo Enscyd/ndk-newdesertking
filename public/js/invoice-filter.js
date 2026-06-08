@@ -14,6 +14,62 @@ document.addEventListener('click', function(e){
 
 
 // =========================
+// PRINT INVOICE (DATE PICKER)
+// =========================
+let pendingPrintId = null;
+
+function openPrintModal(invoiceId, defaultDate) {
+    pendingPrintId = invoiceId;
+
+    const modal = document.getElementById('printDateModal');
+    const input = document.getElementById('printDateInput');
+
+    if (input) {
+        input.value = defaultDate || new Date().toISOString().split('T')[0];
+    }
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+}
+
+function closePrintModal() {
+    pendingPrintId = null;
+
+    const modal = document.getElementById('printDateModal');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+}
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.printInvoiceBtn');
+    if (!btn) return;
+
+    e.preventDefault();
+    openPrintModal(btn.dataset.id, btn.dataset.date);
+});
+
+document.getElementById('cancelPrintBtn')?.addEventListener('click', closePrintModal);
+
+document.getElementById('printDateModal')?.addEventListener('click', function(e) {
+    if (e.target.id === 'printDateModal') closePrintModal();
+});
+
+document.getElementById('confirmPrintBtn')?.addEventListener('click', function() {
+    if (!pendingPrintId) return;
+
+    const date = document.getElementById('printDateInput')?.value;
+    if (!date) {
+        alert('Please select a date');
+        return;
+    }
+
+    const url = window.printUrl.replace(':id', pendingPrintId) + '?date=' + encodeURIComponent(date);
+    window.open(url, '_blank');
+    closePrintModal();
+});
+
+
+// =========================
 // IMAGE PREVIEW
 // =========================
 function openImage(src) {

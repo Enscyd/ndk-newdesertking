@@ -160,14 +160,22 @@ class BillingInvoiceListingController extends Controller
     // ===============================
     // 🖨 PRINT INVOICE
     // ===============================
-    public function print($id)
+    public function print(Request $request, $id)
     {
         $invoice = Billing::with([
             'company:id,name',
             'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
         ])->findOrFail($id);
 
-        return view('billing.print', compact('invoice'));
+        if ($request->filled('date')) {
+            $request->validate(['date' => 'date']);
+        }
+
+        $printDate = $request->filled('date')
+            ? \Carbon\Carbon::parse($request->date)
+            : \Carbon\Carbon::parse($invoice->date);
+
+        return view('billing.print', compact('invoice', 'printDate'));
     }
 
 

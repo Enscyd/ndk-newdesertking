@@ -181,7 +181,7 @@ th {
 
         <div class="top-row">
             <div><strong>Invoice No:</strong> {{ $invoice->invoiceNo }}</div>
-            <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</div>
+            <div><strong>Date:</strong> {{ $printDate->format('d-m-Y') }}</div>
         </div>
 
         @php

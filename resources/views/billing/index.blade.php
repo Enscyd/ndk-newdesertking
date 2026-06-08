@@ -18,6 +18,7 @@
         window.filterUrl = "{{ route('billing.filter') }}";
         window.updateItemUrl = "{{ route('billing.item.update', ':id') }}";
         window.storeTripUrl = "{{ route('billing.store') }}";
+        window.printUrl = "{{ route('billing.print', ':id') }}";
 
         // ✅ Add Trip dropdown data
         window.destinations = @json($destinations);
@@ -116,6 +117,31 @@
 
     <img id="modalImg"
          class="max-h-[80vh] rounded shadow-lg">
+
+</div>
+
+
+<!-- =========================
+     PRINT DATE MODAL
+========================= -->
+<div id="printDateModal"
+     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80" onclick="event.stopPropagation()">
+        <h3 class="text-lg font-semibold mb-4">Print Invoice</h3>
+        <label class="block text-sm text-gray-600 mb-1">Invoice Date</label>
+        <input type="date" id="printDateInput" class="border p-2 rounded w-full mb-4">
+        <div class="flex gap-2 justify-end">
+            <button type="button" id="cancelPrintBtn"
+                class="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600">
+                Cancel
+            </button>
+            <button type="button" id="confirmPrintBtn"
+                class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                Print
+            </button>
+        </div>
+    </div>
 
 </div>
 
