@@ -209,19 +209,19 @@ document.addEventListener('click', function(e){
     const row = btn.closest('tr');
     const cells = row.querySelectorAll('td');
 
-    for(let i = 1; i <= 7; i++){
+    for(let i = 2; i <= 8; i++){
 
         const val = cells[i].innerText.trim();
 
         let input = '';
 
-        if(i === 3) input = `<input class="qty border p-1 w-full" value="${val}">`;
-        else if(i === 4) input = `<input class="rent border p-1 w-full" value="${val}">`;
-        else if(i === 5) input = `<input class="taxable border p-1 w-full bg-gray-100" value="${val}" readonly>`;
-        else if(i === 6) input = `<input class="vat border p-1 w-full bg-gray-100" value="${val}" readonly>`;
-        else if(i === 7) input = `<input class="total border p-1 w-full bg-gray-100" value="${val}" readonly>`;
-        else if(i === 1) input = `<input class="description border p-1 w-full" value="${val}">`;
-        else if(i === 2) input = `<input class="vehicleNo border p-1 w-full" value="${val}">`;
+        if(i === 4) input = `<input class="qty border p-1 w-full" value="${val}">`;
+        else if(i === 5) input = `<input class="rent border p-1 w-full" value="${val}">`;
+        else if(i === 6) input = `<input class="taxable border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else if(i === 7) input = `<input class="vat border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else if(i === 8) input = `<input class="total border p-1 w-full bg-gray-100" value="${val}" readonly>`;
+        else if(i === 2) input = `<input class="description border p-1 w-full" value="${val}">`;
+        else if(i === 3) input = `<input class="vehicleNo border p-1 w-full" value="${val}">`;
 
         cells[i].innerHTML = input;
     }
@@ -334,8 +334,14 @@ document.addEventListener('click', function(e){
         .map(t => `<option value="${t.truckNumber}">${t.truckNumber}</option>`)
         .join('');
 
+    const today = new Date().toISOString().split('T')[0];
+
     newRow.innerHTML = `
         <td class="p-3 border text-center">New</td>
+
+        <td class="p-3 border">
+            <input type="date" class="trip-date border p-1 w-full" value="${today}">
+        </td>
 
         <td class="p-3 border">
             <select class="trip-description border p-1 w-full">
@@ -397,6 +403,7 @@ document.addEventListener('click', function(e){
 
     const formData = new FormData();
     formData.append('invoice_id', btn.dataset.invoiceId);
+    formData.append('tripDate', row.querySelector('.trip-date')?.value || '');
     formData.append('description', row.querySelector('.trip-description')?.value || '');
     formData.append('vehicleNo', row.querySelector('.trip-vehicle')?.value || '');
     formData.append('quantity', row.querySelector('.qty')?.value || 0);

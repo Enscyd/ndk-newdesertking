@@ -11,6 +11,7 @@ use App\Models\Billing;
 use App\Models\BillingItem;
 use App\Models\Company;
 use App\Models\Truck;
+use App\Models\Trip;
 use App\Models\InvoiceCounter;
 
 class BillingController extends Controller
@@ -75,10 +76,15 @@ class BillingController extends Controller
 
             $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
 
+            $tripsById = Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id');
+            $billingDate = $tripsById->isNotEmpty()
+                ? Carbon::parse($tripsById->max())
+                : now();
+
             $billing = Billing::create([
                 'invoiceNo' => $invoiceNo,
                 'companyId' => $companyIds->first(),
-                'date' => now(),
+                'date' => $billingDate,
                 'billImage' => $imagePath,
                 'grandTotal' => 0
             ]);
@@ -93,6 +99,7 @@ class BillingController extends Controller
                 BillingItem::create([
                     'billingId' => $billing->id,
                     'tripId' => $trip['id'],
+                    'tripDate' => $tripsById[$trip['id']] ?? $billingDate,
                     'description' => $trip['destination'] ?? '',
                     'vehicleNo' => $trip['vehicleNo'] ?? '',
                     'quantity' => $trip['qty'],

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\File;
 use App\Models\Billing;
 use App\Models\BillingItem;
 use App\Models\InvoiceCounter;
+use App\Models\Trip;
+use Carbon\Carbon;
 
 class BillingInvoiceTripController extends Controller
 {
@@ -45,9 +47,14 @@ public function BillingStore(Request $request)
 
             $nextTripId = 'INV-' . ($lastNumber + 1);
 
+            $tripDate = $request->filled('tripDate')
+                ? Carbon::parse($request->tripDate)
+                : $billing->date;
+
             BillingItem::create([
                 'billingId'     => $billing->id,
                 'tripId'        => $nextTripId,
+                'tripDate'      => $tripDate,
                 'description'   => $request->description,
                 'vehicleNo'     => $request->vehicleNo,
                 'quantity'      => $request->quantity,
@@ -84,6 +91,7 @@ public function BillingStore(Request $request)
             'items'         => 'required|array|min:1',
 
             'items.*.tripId'        => 'nullable|integer',
+            'items.*.tripDate'      => 'nullable|date',
             'items.*.description'   => 'required|string|max:255',
             'items.*.vehicleNo'     => 'required|string|max:50',
             'items.*.quantity'      => 'required|numeric|min:0.01',
@@ -134,9 +142,16 @@ public function BillingStore(Request $request)
         $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
 
         // ===============================
-        // 💰 SAFE TOTAL
+        // 💰 SAFE TOTAL + TRIP DATES
         // ===============================
         $calculatedTotal = collect($request->items)->sum('totalAmount');
+
+        $tripIds = collect($request->items)->pluck('tripId')->filter()->unique();
+        $tripsById = Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id');
+
+        $billingDate = $tripsById->isNotEmpty()
+            ? Carbon::parse($tripsById->max())
+            : now();
 
         // ===============================
         // 💾 CREATE BILLING
@@ -147,16 +162,21 @@ public function BillingStore(Request $request)
             'grandTotal'    => $calculatedTotal,
             'paymentStatus' => $request->paymentStatus,
             'billImage'     => $imagePath,
-            'date'          => now(),
+            'date'          => $billingDate,
         ]);
 
         // ===============================
         // 📦 SAVE ITEMS
         // ===============================
-        $items = collect($request->items)->map(function ($item) use ($billing) {
+        $items = collect($request->items)->map(function ($item) use ($billing, $tripsById) {
+            $tripDate = isset($item['tripId']) && $tripsById->has($item['tripId'])
+                ? Carbon::parse($tripsById[$item['tripId']])
+                : (!empty($item['tripDate']) ? Carbon::parse($item['tripDate']) : $billing->date);
+
             return [
                 'billingId'     => $billing->id,
                 'tripId'        => $item['tripId'] ?? null,
+                'tripDate'      => $tripDate,
                 'description'   => $item['description'],
                 'vehicleNo'     => $item['vehicleNo'],
                 'quantity'      => $item['quantity'],

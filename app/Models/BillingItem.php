@@ -11,6 +11,7 @@ class BillingItem extends Model
     protected $fillable = [
         'billingId',
         'tripId',
+        'tripDate',
         'description',
         'vehicleNo',
         'quantity',
@@ -18,6 +19,10 @@ class BillingItem extends Model
         'taxableAmount',
         'vat',
         'totalAmount'
+    ];
+
+    protected $casts = [
+        'tripDate' => 'datetime',
     ];
 
     public function billing()

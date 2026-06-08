@@ -147,9 +147,10 @@ model accounts {
 }
 
 model billingitems {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   billingId     Int
   tripId        Int
+  tripDate      DateTime?
   description   String
   vehicleNo     String
   quantity      Float

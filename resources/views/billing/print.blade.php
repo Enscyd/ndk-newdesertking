@@ -181,7 +181,7 @@ th {
 
         <div class="top-row">
             <div><strong>Invoice No:</strong> {{ $invoice->invoiceNo }}</div>
-            <div><strong>Date:</strong> {{ now()->format('d-m-Y') }}</div>
+            <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</div>
         </div>
 
         @php
@@ -225,7 +225,7 @@ th {
 
                 <tr class="data-row">
                     <td>{{ ($pageIndex * $rowsPerPage) + $i + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</td>
+                    <td>{{ $item->tripDate ? \Carbon\Carbon::parse($item->tripDate)->format('d-m-Y') : \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</td>
                     <td class="left">{{ $item->description }}</td>
                     <td>{{ $item->vehicleNo }}</td>
                     <td>{{ $item->quantity }}</td>

@@ -97,6 +97,7 @@
 <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
 <tr>
     <th class="p-3 border">#</th>
+    <th class="p-3 border">Date</th>
     <th class="p-3 border text-left">Description</th>
     <th class="p-3 border">Vehicle</th>
     <th class="p-3 border">Qty</th>
@@ -116,6 +117,10 @@
 <tr class="hover:bg-gray-50 transition">
 
     <td class="p-3 border text-center">{{ $i+1 }}</td>
+
+    <td class="p-3 border text-center whitespace-nowrap">
+        {{ $item->tripDate ? \Carbon\Carbon::parse($item->tripDate)->format('d M Y') : '-' }}
+    </td>
 
     <td class="p-3 border font-medium">
         {{ $item->description ?? '-' }}
@@ -167,7 +172,7 @@
 @else
 
 <tr>
-    <td colspan="9" class="p-4 text-center text-gray-400">
+    <td colspan="10" class="p-4 text-center text-gray-400">
         No items found
     </td>
 </tr>
@@ -180,7 +185,7 @@
 ========================= -->
 <tr class="bg-gray-50 font-semibold">
 
-    <td colspan="7" class="p-3 border text-right text-gray-700">
+    <td colspan="8" class="p-3 border text-right text-gray-700">
         Grand Total
     </td>
 

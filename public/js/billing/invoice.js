@@ -138,6 +138,7 @@ export function renderInvoice() {
 
         hiddenHtml += `
             <input type="hidden" name="items[${index}][tripId]" value="${trip.id}">
+            <input type="hidden" name="items[${index}][tripDate]" value="${trip.tripDate ?? ""}">
             <input type="hidden" name="items[${index}][description]" value="${trip.destination}">
             <input type="hidden" name="items[${index}][vehicleNo]" value="${trip.vehicleNo}">
             <input type="hidden" name="items[${index}][quantity]" value="${trip.qty}">

@@ -160,6 +160,7 @@ class DatabaseSeeder extends Seeder
                 DB::table('billingitems')->insert([
                     'billingId' => $billingId,
                     'tripId' => $trip->id,
+                    'tripDate' => $trip->tripDate,
                     'description' => 'Transportation of Goods to ' . $destName,
                     'vehicleNo' => $truckNo,
                     'quantity' => $qty,

@@ -24,7 +24,7 @@ class BillingInvoiceListingController extends Controller
 
     $invoices = Billing::with([
         'company:id,name',
-        'items:id,billingId,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
+        'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
     ])
     ->whereMonth('date', now()->month)
     ->whereYear('date', now()->year)
@@ -48,7 +48,7 @@ class BillingInvoiceListingController extends Controller
     try {
         $query = Billing::with([
             'company:id,name',
-            'items:id,billingId,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
+            'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
         ]);
 
         if ($request->filled('invoiceNo')) {
@@ -161,7 +161,7 @@ class BillingInvoiceListingController extends Controller
     {
         $invoice = Billing::with([
             'company:id,name',
-            'items:id,billingId,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
+            'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
         ])->findOrFail($id);
 
         return view('billing.print', compact('invoice'));
