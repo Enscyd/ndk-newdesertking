@@ -26,7 +26,7 @@ class BillingInvoiceTripController extends Controller
             'paymentStatus'         => 'required|in:PAID,UNPAID',
             'billImage'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'items'                 => 'required|array|min:1',
-            'items.*.tripId'        => 'required|integer|exists:trips,id',
+            'items.*.tripId'        => 'nullable|integer',
             'items.*.description'   => 'required|string|max:255',
             'items.*.vehicleNo'     => 'required|string|max:50',
             'items.*.quantity'      => 'required|numeric|min:0.01',
@@ -73,23 +73,21 @@ class BillingInvoiceTripController extends Controller
             $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
             $calculatedTotal = collect($request->items)->sum('totalAmount');
 
+            // ✅ Resolve trip dates so the invoice uses the real trip date (not now())
             $tripIds = collect($request->items)
                 ->pluck('tripId')
+                ->filter()
                 ->map(fn ($id) => (int) $id)
                 ->unique()
                 ->values();
 
-            if (BillingItem::whereIn('tripId', $tripIds)->exists()) {
-                throw new \RuntimeException('One or more trips are already billed.');
-            }
+            $tripsById = $tripIds->isNotEmpty()
+                ? Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id')
+                : collect();
 
-            $tripsById = Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id');
-
-            if ($tripsById->count() !== $tripIds->count()) {
-                throw new \RuntimeException('One or more selected trips could not be found.');
-            }
-
-            $billingDate = Carbon::parse($tripsById->max());
+            $billingDate = $tripsById->filter()->isNotEmpty()
+                ? Carbon::parse($tripsById->filter()->max())
+                : now();
 
             $billing = Billing::create([
                 'invoiceNo'     => $invoiceNo,
@@ -101,13 +99,16 @@ class BillingInvoiceTripController extends Controller
             ]);
 
             $items = collect($request->items)->map(function ($item) use ($billing, $tripsById) {
-                $tripId = (int) $item['tripId'];
-                $tripDate = Carbon::parse($tripsById[$tripId]);
+                $tripId = isset($item['tripId']) ? (int) $item['tripId'] : null;
+
+                $tripDate = ($tripId && $tripsById->get($tripId))
+                    ? Carbon::parse($tripsById->get($tripId))
+                    : $billing->date;
 
                 return [
                     'billingId'     => $billing->id,
                     'tripId'        => $tripId,
-                    'tripDate'      => $tripDate->toDateTimeString(),
+                    'tripDate'      => $tripDate,
                     'description'   => $item['description'],
                     'vehicleNo'     => $item['vehicleNo'],
                     'quantity'      => $item['quantity'],
