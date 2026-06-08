@@ -118,7 +118,10 @@ export async function filterTrips(page = 1) {
             if (rawDate) {
                 const parsed = new Date(rawDate.replace(" ", "T"));
                 if (!isNaN(parsed)) {
-                    formattedDate = `${parsed.getMonth() + 1}-${parsed.getDate()}-${parsed.getFullYear()}`;
+                    const year = parsed.getFullYear();
+                    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+                    const day = String(parsed.getDate()).padStart(2, "0");
+                    formattedDate = `${year}-${month}-${day}`;
                 }
             }
 

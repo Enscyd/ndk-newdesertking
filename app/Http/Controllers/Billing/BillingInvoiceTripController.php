@@ -3,49 +3,159 @@
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use App\Models\Billing;
 use App\Models\BillingItem;
 use App\Models\InvoiceCounter;
 use App\Models\Trip;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class BillingInvoiceTripController extends Controller
 {
-    // ===============================
-    // ✅ SAVE BILLING / ADD TRIP
-    // ===============================
-public function BillingStore(Request $request)
-{
-    DB::beginTransaction();
-
-    $imagePath = null;
-
-    try {
-
-        /*
-        |--------------------------------------------------------------------------
-        | ✅ ADD TRIP TO EXISTING INVOICE
-        |--------------------------------------------------------------------------
-        */
+    public function BillingStore(Request $request)
+    {
         if ($request->filled('invoice_id')) {
+            return $this->addTripToExistingInvoice($request);
+        }
 
-            $billing = Billing::findOrFail($request->invoice_id);
+        $request->validate([
+            'companyId'             => 'required|integer|exists:companies,id',
+            'grandTotal'            => 'required|numeric|min:0',
+            'paymentStatus'         => 'required|in:PAID,UNPAID',
+            'billImage'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'items'                 => 'required|array|min:1',
+            'items.*.tripId'        => 'required|integer|exists:trips,id',
+            'items.*.description'   => 'required|string|max:255',
+            'items.*.vehicleNo'     => 'required|string|max:50',
+            'items.*.quantity'      => 'required|numeric|min:0.01',
+            'items.*.rent'          => 'required|numeric|min:0',
+            'items.*.taxableAmount' => 'required|numeric|min:0',
+            'items.*.vat'           => 'required|numeric|min:0',
+            'items.*.totalAmount'   => 'required|numeric|min:0',
+        ]);
 
-            // ✅ manual invoice trip string ID
-            $lastInvoiceTrip = BillingItem::where('tripId', 'like', 'INV-%')
-                ->orderByDesc('id')
-                ->value('tripId');
+        DB::beginTransaction();
 
-            $lastNumber = 0;
+        $imagePath = null;
 
-            if ($lastInvoiceTrip) {
-                $lastNumber = (int) str_replace('INV-', '', $lastInvoiceTrip);
+        try {
+            if ($request->hasFile('billImage')) {
+                $file = $request->file('billImage');
+                $extension = $file->getClientOriginalExtension();
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
+                $destination = public_path('storage/billing');
+
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0755, true);
+                }
+
+                $file->move($destination, $fileName);
+                $imagePath = 'storage/billing/' . $fileName;
             }
 
-            $nextTripId = 'INV-' . ($lastNumber + 1);
+            $year = now()->year;
+
+            $counter = InvoiceCounter::where('year', $year)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$counter) {
+                $counter = InvoiceCounter::create([
+                    'year'        => $year,
+                    'last_number' => 0,
+                ]);
+            }
+
+            $counter->increment('last_number');
+
+            $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
+            $calculatedTotal = collect($request->items)->sum('totalAmount');
+
+            $tripIds = collect($request->items)
+                ->pluck('tripId')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            if (BillingItem::whereIn('tripId', $tripIds)->exists()) {
+                throw new \RuntimeException('One or more trips are already billed.');
+            }
+
+            $tripsById = Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id');
+
+            if ($tripsById->count() !== $tripIds->count()) {
+                throw new \RuntimeException('One or more selected trips could not be found.');
+            }
+
+            $billingDate = Carbon::parse($tripsById->max());
+
+            $billing = Billing::create([
+                'invoiceNo'     => $invoiceNo,
+                'companyId'     => $request->companyId,
+                'grandTotal'    => $calculatedTotal,
+                'paymentStatus' => $request->paymentStatus,
+                'billImage'     => $imagePath,
+                'date'          => $billingDate,
+            ]);
+
+            $items = collect($request->items)->map(function ($item) use ($billing, $tripsById) {
+                $tripId = (int) $item['tripId'];
+                $tripDate = Carbon::parse($tripsById[$tripId]);
+
+                return [
+                    'billingId'     => $billing->id,
+                    'tripId'        => $tripId,
+                    'tripDate'      => $tripDate->toDateTimeString(),
+                    'description'   => $item['description'],
+                    'vehicleNo'     => $item['vehicleNo'],
+                    'quantity'      => $item['quantity'],
+                    'rent'          => $item['rent'],
+                    'taxableAmount' => $item['taxableAmount'],
+                    'vat'           => $item['vat'],
+                    'totalAmount'   => $item['totalAmount'],
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ];
+            })->toArray();
+
+            BillingItem::insert($items);
+
+            DB::commit();
+
+            return redirect()
+                ->route('billing.create')
+                ->with('success', "Billing saved successfully ✅ Invoice: {$invoiceNo}");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            if (!empty($imagePath)) {
+                $fullPath = public_path($imagePath);
+
+                if (File::exists($fullPath)) {
+                    File::delete($fullPath);
+                }
+            }
+
+            return back()
+                ->withInput()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    private function addTripToExistingInvoice(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $billing = Billing::findOrFail($request->invoice_id);
+
+            $lastManualTripId = BillingItem::query()
+                ->where('tripId', '<', 0)
+                ->min('tripId');
+
+            $nextTripId = $lastManualTripId ? ($lastManualTripId - 1) : -1;
 
             $tripDate = $request->filled('tripDate')
                 ? Carbon::parse($request->tripDate)
@@ -64,7 +174,6 @@ public function BillingStore(Request $request)
                 'totalAmount'   => $request->totalAmount,
             ]);
 
-            // ✅ recalculate invoice grand total
             $billing->grandTotal = BillingItem::where('billingId', $billing->id)
                 ->sum('totalAmount');
 
@@ -74,158 +183,18 @@ public function BillingStore(Request $request)
 
             return response()->json([
                 'success' => true,
-                'message' => 'Trip added successfully'
+                'message' => 'Trip added successfully',
             ]);
-        }
+        } catch (\Throwable $e) {
+            DB::rollBack();
 
-        /*
-        |--------------------------------------------------------------------------
-        | ✅ CREATE NEW INVOICE
-        |--------------------------------------------------------------------------
-        */
-        $request->validate([
-            'companyId'     => 'required|integer|exists:companies,id',
-            'grandTotal'    => 'required|numeric|min:0',
-            'paymentStatus' => 'required|in:PAID,UNPAID',
-            'billImage'     => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'items'         => 'required|array|min:1',
-
-            'items.*.tripId'        => 'nullable|integer',
-            'items.*.tripDate'      => 'nullable|date',
-            'items.*.description'   => 'required|string|max:255',
-            'items.*.vehicleNo'     => 'required|string|max:50',
-            'items.*.quantity'      => 'required|numeric|min:0.01',
-            'items.*.rent'          => 'required|numeric|min:0',
-            'items.*.taxableAmount' => 'required|numeric|min:0',
-            'items.*.vat'           => 'required|numeric|min:0',
-            'items.*.totalAmount'   => 'required|numeric|min:0',
-        ]);
-
-        // ===============================
-        // 📷 UPLOAD IMAGE
-        // ===============================
-        if ($request->hasFile('billImage')) {
-            $file = $request->file('billImage');
-
-            $extension = $file->getClientOriginalExtension();
-            $fileName = time() . '_' . uniqid() . '.' . $extension;
-
-            $destination = public_path('storage/billing');
-
-            if (!file_exists($destination)) {
-                mkdir($destination, 0755, true);
-            }
-
-            $file->move($destination, $fileName);
-
-            $imagePath = 'storage/billing/' . $fileName;
-        }
-
-        // ===============================
-        // 🔢 GENERATE INVOICE NUMBER
-        // ===============================
-        $year = now()->year;
-
-        $counter = InvoiceCounter::where('year', $year)
-            ->lockForUpdate()
-            ->first();
-
-        if (!$counter) {
-            $counter = InvoiceCounter::create([
-                'year' => $year,
-                'last_number' => 0
-            ]);
-        }
-
-        $counter->increment('last_number');
-
-        $invoiceNo = 'NDK-' . $year . '-' . str_pad($counter->last_number, 3, '0', STR_PAD_LEFT);
-
-        // ===============================
-        // 💰 SAFE TOTAL + TRIP DATES
-        // ===============================
-        $calculatedTotal = collect($request->items)->sum('totalAmount');
-
-        $tripIds = collect($request->items)->pluck('tripId')->filter()->unique();
-        $tripsById = Trip::whereIn('id', $tripIds)->pluck('tripDate', 'id');
-
-        $billingDate = $tripsById->isNotEmpty()
-            ? Carbon::parse($tripsById->max())
-            : now();
-
-        // ===============================
-        // 💾 CREATE BILLING
-        // ===============================
-        $billing = Billing::create([
-            'invoiceNo'     => $invoiceNo,
-            'companyId'     => $request->companyId,
-            'grandTotal'    => $calculatedTotal,
-            'paymentStatus' => $request->paymentStatus,
-            'billImage'     => $imagePath,
-            'date'          => $billingDate,
-        ]);
-
-        // ===============================
-        // 📦 SAVE ITEMS
-        // ===============================
-        $items = collect($request->items)->map(function ($item) use ($billing, $tripsById) {
-            $tripDate = isset($item['tripId']) && $tripsById->has($item['tripId'])
-                ? Carbon::parse($tripsById[$item['tripId']])
-                : (!empty($item['tripDate']) ? Carbon::parse($item['tripDate']) : $billing->date);
-
-            return [
-                'billingId'     => $billing->id,
-                'tripId'        => $item['tripId'] ?? null,
-                'tripDate'      => $tripDate,
-                'description'   => $item['description'],
-                'vehicleNo'     => $item['vehicleNo'],
-                'quantity'      => $item['quantity'],
-                'rent'          => $item['rent'],
-                'taxableAmount' => $item['taxableAmount'],
-                'vat'           => $item['vat'],
-                'totalAmount'   => $item['totalAmount'],
-                'created_at'    => now(),
-                'updated_at'    => now(),
-            ];
-        })->toArray();
-
-        BillingItem::insert($items);
-
-        DB::commit();
-
-        return redirect()->route('billing.create')
-            ->with('success', "Billing saved successfully ✅ Invoice: {$invoiceNo}");
-
-    } catch (\Throwable $e) {
-
-        DB::rollBack();
-
-        if (!empty($imagePath)) {
-            $fullPath = public_path($imagePath);
-
-            if (File::exists($fullPath)) {
-                File::delete($fullPath);
-            }
-        }
-
-        // ✅ VERY IMPORTANT FOR AJAX ADD TRIP
-        if ($request->filled('invoice_id')) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
-
-        return back()->withErrors([
-            'error' => $e->getMessage()
-        ]);
     }
-}
 
-
-    // ===============================
-    // ✅ DELETE ITEM + UPDATE TOTAL
-    // ===============================
     public function BillingDelete($id)
     {
         DB::beginTransaction();
@@ -239,21 +208,18 @@ public function BillingStore(Request $request)
             $total = BillingItem::where('billingId', $billingId)
                 ->sum('totalAmount');
 
-            Billing::where('id', $billingId)
-                ->update([
-                    'grandTotal' => $total
-                ]);
+            Billing::where('id', $billingId)->update([
+                'grandTotal' => $total,
+            ]);
 
             DB::commit();
 
             return back()->with('success', 'Trip removed successfully');
-
         } catch (\Throwable $e) {
-
             DB::rollBack();
 
             return back()->withErrors([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }

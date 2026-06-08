@@ -9,6 +9,13 @@ import { calculateTotals } from './calculations.js';
 export let selectedTrips = window.selectedTrips || [];
 window.selectedTrips = selectedTrips;
 
+function escapeAttr(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;");
+}
+
 
 /* =========================
    ADD TRIP
@@ -137,15 +144,14 @@ export function renderInvoice() {
         </tr>`;
 
         hiddenHtml += `
-            <input type="hidden" name="items[${index}][tripId]" value="${trip.id}">
-            <input type="hidden" name="items[${index}][tripDate]" value="${trip.tripDate ?? ""}">
-            <input type="hidden" name="items[${index}][description]" value="${trip.destination}">
-            <input type="hidden" name="items[${index}][vehicleNo]" value="${trip.vehicleNo}">
-            <input type="hidden" name="items[${index}][quantity]" value="${trip.qty}">
-            <input type="hidden" name="items[${index}][rent]" value="${trip.rent}">
-            <input type="hidden" name="items[${index}][taxableAmount]" value="${taxable}">
-            <input type="hidden" name="items[${index}][vat]" value="${vat}">
-            <input type="hidden" name="items[${index}][totalAmount]" value="${total}">
+            <input type="hidden" name="items[${index}][tripId]" value="${escapeAttr(trip.id)}">
+            <input type="hidden" name="items[${index}][description]" value="${escapeAttr(trip.destination)}">
+            <input type="hidden" name="items[${index}][vehicleNo]" value="${escapeAttr(trip.vehicleNo)}">
+            <input type="hidden" name="items[${index}][quantity]" value="${escapeAttr(trip.qty)}">
+            <input type="hidden" name="items[${index}][rent]" value="${escapeAttr(trip.rent)}">
+            <input type="hidden" name="items[${index}][taxableAmount]" value="${escapeAttr(taxable)}">
+            <input type="hidden" name="items[${index}][vat]" value="${escapeAttr(vat)}">
+            <input type="hidden" name="items[${index}][totalAmount]" value="${escapeAttr(total)}">
         `;
     });
 
