@@ -274,7 +274,7 @@ Export PDF
 
 <tr>
 
-<th class="border p-2">ID</th>
+<th class="border p-2">S.No.</th>
 <th class="border p-2">Destination</th>
 <th class="border p-2">Driver</th>
 <th class="border p-2">Truck</th>

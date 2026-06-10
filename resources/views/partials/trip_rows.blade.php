@@ -11,11 +11,15 @@ $totalOmaniAmount = 0;
 $totalDriverAmount += $trip->driverAmount ?? 0;
 $totalTripAmount += $trip->tripAmount ?? 0;
 $totalOmaniAmount += $trip->omaniAmount ?? 0;
+
+$serialNumber = method_exists($trips, 'total')
+    ? $trips->total() - (($trips->currentPage() - 1) * $trips->perPage()) - $loop->index
+    : $trips->count() - $loop->index;
 @endphp
 
 <tr id="row-{{ $trip->id }}">
 
-<td class="border p-2">{{ $trip->id }}</td>
+<td class="border p-2">{{ $serialNumber }}</td>
 
 <td class="border p-2">{{ $trip->destination->name ?? '' }}</td>
 
