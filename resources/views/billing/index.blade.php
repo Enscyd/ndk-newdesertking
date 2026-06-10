@@ -125,9 +125,11 @@
      PRINT DATE MODAL
 ========================= -->
 <div id="printDateModal"
-     class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-[1100]">
+     class="fixed inset-0 hidden items-center justify-center z-[1100]">
 
-    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
+    <div id="printDateBackdrop" class="absolute inset-0 bg-black bg-opacity-70"></div>
+
+    <div id="printDatePanel" class="relative bg-white rounded-lg shadow-lg p-6 w-80">
         <h3 class="text-lg font-semibold mb-4">Print Invoice</h3>
         <label class="block text-sm text-gray-600 mb-1">Invoice Date</label>
         <input type="date" id="printDateInput" class="border p-2 rounded w-full mb-4">

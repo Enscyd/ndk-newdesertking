@@ -167,12 +167,14 @@ class BillingInvoiceListingController extends Controller
             'items:id,billingId,tripDate,description,vehicleNo,quantity,rent,taxableAmount,vat,totalAmount'
         ])->findOrFail($id);
 
-        if ($request->filled('date')) {
-            $request->validate(['date' => 'date']);
+        $selectedDate = $request->query('date');
+
+        if ($selectedDate) {
+            $request->validate(['date' => 'required|date']);
         }
 
-        $printDate = $request->filled('date')
-            ? \Carbon\Carbon::parse($request->date)
+        $printDate = $selectedDate
+            ? \Carbon\Carbon::parse($selectedDate)->startOfDay()
             : \Carbon\Carbon::parse($invoice->date);
 
         return view('billing.print', compact('invoice', 'printDate'));

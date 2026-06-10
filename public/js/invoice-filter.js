@@ -17,6 +17,15 @@ document.addEventListener('click', function(e){
 // PRINT INVOICE (DATE PICKER)
 // =========================
 let pendingPrintId = null;
+let printModalIgnoreBackdrop = false;
+
+function getLocalDateString() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
 
 function openPrintModal(invoiceId, defaultDate) {
     pendingPrintId = invoiceId;
@@ -27,7 +36,7 @@ function openPrintModal(invoiceId, defaultDate) {
     if (!modal) return;
 
     if (input) {
-        input.value = defaultDate || new Date().toISOString().split('T')[0];
+        input.value = defaultDate || getLocalDateString();
     }
 
     modal.classList.remove('hidden');
@@ -36,6 +45,7 @@ function openPrintModal(invoiceId, defaultDate) {
 
 function closePrintModal() {
     pendingPrintId = null;
+    printModalIgnoreBackdrop = false;
 
     const modal = document.getElementById('printDateModal');
     if (!modal) return;
@@ -48,6 +58,29 @@ function getPrintUrl(invoiceId, date) {
     const base = (window.printUrlBase || '/billing/print').replace(/\/$/, '');
     return `${base}/${invoiceId}?date=${encodeURIComponent(date)}`;
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const printDateInput = document.getElementById('printDateInput');
+
+    printDateInput?.addEventListener('focus', function() {
+        printModalIgnoreBackdrop = true;
+    });
+
+    // Native date pickers close on selection and can ghost-click the backdrop.
+    printDateInput?.addEventListener('blur', function() {
+        setTimeout(function() {
+            printModalIgnoreBackdrop = false;
+        }, 400);
+    });
+
+    printDateInput?.addEventListener('change', function() {
+        printModalIgnoreBackdrop = false;
+    });
+
+    document.getElementById('printDatePanel')?.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+});
 
 document.addEventListener('click', function(e) {
     const printBtn = e.target.closest('.printInvoiceBtn');
@@ -75,12 +108,13 @@ document.addEventListener('click', function(e) {
             return;
         }
 
-        window.open(getPrintUrl(pendingPrintId, date), '_blank');
+        const printUrl = getPrintUrl(pendingPrintId, date);
         closePrintModal();
+        window.open(printUrl, '_blank');
         return;
     }
 
-    if (e.target.id === 'printDateModal') {
+    if (e.target.id === 'printDateBackdrop' && !printModalIgnoreBackdrop) {
         closePrintModal();
     }
 });
