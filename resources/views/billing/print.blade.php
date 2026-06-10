@@ -57,9 +57,25 @@ h2 {
 }
 
 .top-row {
-    display: flex;
-    justify-content: space-between;
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
     font-size: 12px;
+}
+
+.top-row td {
+    border: 1pt solid #000;
+    padding: 4px 6px;
+}
+
+.top-row td:first-child {
+    text-align: left;
+    width: 50%;
+}
+
+.top-row td:last-child {
+    text-align: right;
+    width: 50%;
 }
 
 .customer {
@@ -179,10 +195,12 @@ th {
             VAT Registration Certificate No:10241591 , VATIN No:OM1100183557
         </div>
 
-        <div class="top-row">
-            <div><strong>Invoice No:</strong> {{ $invoice->invoiceNo }}</div>
-            <div><strong>Invoice Date:</strong> {{ $printDate->format('d-m-Y') }}</div>
-        </div>
+        <table class="top-row">
+            <tr>
+                <td><strong>Invoice No:</strong> {{ $invoice->invoiceNo }}</td>
+                <td><strong>Invoice Date:</strong> {{ $printDate->format('d-m-Y') }}</td>
+            </tr>
+        </table>
 
         @php
             $companyName = $invoice->company->name ?? null;
