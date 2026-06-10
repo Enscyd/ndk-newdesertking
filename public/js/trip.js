@@ -434,39 +434,39 @@ $(document).ready(function(){
     let activeOverrideCell = null;
     let overrideSavePending = false;
 
+    function renderTruckCellDisplay($cell, displayText, isOverridden) {
+        const safeText = $('<div>').text(displayText).html();
+
+        $cell.removeClass('is-editing')
+            .toggleClass('bg-amber-50', isOverridden)
+            .attr('data-original', displayText)
+            .html(
+                '<div class="truck-override-wrap flex items-center justify-between gap-1 min-w-0">' +
+                    '<span class="truck-display truncate">' + safeText + '</span>' +
+                    '<button type="button" class="editTruckBtn shrink-0 bg-slate-600 text-white px-1.5 py-0.5 rounded text-[10px] leading-tight hover:bg-slate-700" title="Edit truck name">Edit</button>' +
+                '</div>'
+            );
+
+        if (activeOverrideCell && activeOverrideCell.is($cell)) {
+            activeOverrideCell = null;
+        }
+    }
+
     function cancelOverrideEdit($cell) {
         if (!$cell || !$cell.length || !$cell.hasClass('is-editing')) return;
 
         const originalText = String($cell.data('original') || '');
-        const isOverridden = $cell.hasClass('bg-amber-50');
+        const isOverridden = Boolean($cell.data('is-overridden'));
 
-        $cell.removeClass('is-editing')
-            .empty()
-            .text(originalText)
-            .toggleClass('bg-amber-50', isOverridden);
-
-        if (activeOverrideCell && activeOverrideCell.is($cell)) {
-            activeOverrideCell = null;
-        }
+        renderTruckCellDisplay($cell, originalText, isOverridden);
     }
 
     function applyOverrideCellState($cell, displayText, isOverridden) {
-        $cell.removeClass('is-editing')
-            .empty()
-            .text(displayText)
-            .attr('data-original', displayText)
-            .toggleClass('bg-amber-50', isOverridden)
-            .attr('title', isOverridden
-                ? 'Overridden truck name (click to edit)'
-                : 'Click to override truck name');
-
-        if (activeOverrideCell && activeOverrideCell.is($cell)) {
-            activeOverrideCell = null;
-        }
+        renderTruckCellDisplay($cell, displayText, isOverridden);
     }
 
     function startOverrideEdit($cell) {
-        if ($cell.hasClass('is-editing')) {
+        if (!$cell.length || $cell.hasClass('is-editing')) {
             return;
         }
 
@@ -475,19 +475,25 @@ $(document).ready(function(){
         }
 
         activeOverrideCell = $cell;
-        const originalText = String($cell.data('original') || $cell.text().trim());
+        const originalText = String($cell.data('original') || $cell.find('.truck-display').text().trim());
+        const isOverridden = $cell.hasClass('bg-amber-50');
 
         $cell.addClass('is-editing')
             .data('original', originalText)
-            .empty();
+            .data('is-overridden', isOverridden)
+            .removeClass('bg-amber-50')
+            .html(
+                '<div class="truck-override-edit flex flex-col gap-1">' +
+                    '<input type="text" class="override-input" value="">' +
+                    '<div class="flex gap-1 justify-end">' +
+                        '<button type="button" class="saveTruckBtn bg-green-600 text-white px-2 py-0.5 rounded text-[10px] hover:bg-green-700">Save</button>' +
+                        '<button type="button" class="cancelTruckBtn bg-gray-500 text-white px-2 py-0.5 rounded text-[10px] hover:bg-gray-600">Cancel</button>' +
+                    '</div>' +
+                '</div>'
+            );
 
-        const $input = $('<input type="text" class="override-input">');
-        $input.val(originalText);
-        $cell.append($input);
-
-        $input.on('click mousedown', function(e) {
-            e.stopPropagation();
-        });
+        const $input = $cell.find('.override-input');
+        $input.val(originalText).trigger('focus')[0].select();
 
         $input.on('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -500,20 +506,6 @@ $(document).ready(function(){
                 cancelOverrideEdit($cell);
             }
         });
-
-        $input.on('blur', function() {
-            setTimeout(function() {
-                if (overrideSavePending) {
-                    return;
-                }
-                if ($cell.hasClass('is-editing') && document.activeElement !== $input[0]) {
-                    cancelOverrideEdit($cell);
-                }
-            }, 150);
-        });
-
-        $input.trigger('focus');
-        $input[0].select();
     }
 
     function saveTruckOverride($cell, rawValue) {
@@ -572,12 +564,23 @@ $(document).ready(function(){
         });
     }
 
-    $(document).on('click', '#tripTableBody td.editable-override', function(e) {
-        if ($(e.target).is('input')) {
-            return;
-        }
+    $(document).on('click', '#tripTableBody .editTruckBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        startOverrideEdit($(this).closest('.truck-override-cell'));
+    });
 
-        startOverrideEdit($(this));
+    $(document).on('click', '#tripTableBody .saveTruckBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $cell = $(this).closest('.truck-override-cell');
+        saveTruckOverride($cell, $cell.find('.override-input').val());
+    });
+
+    $(document).on('click', '#tripTableBody .cancelTruckBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        cancelOverrideEdit($(this).closest('.truck-override-cell'));
     });
 
 

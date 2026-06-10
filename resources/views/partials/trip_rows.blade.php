@@ -25,11 +25,19 @@ $serialNumber = method_exists($trips, 'total')
 
 <td class="border p-2">{{ $trip->employee->employeeName ?? '' }}</td>
 
-<td class="border p-2 editable-override {{ $trip->isTruckOverridden() ? 'bg-amber-50' : '' }}"
+<td class="border p-2 truck-override-cell {{ $trip->isTruckOverridden() ? 'bg-amber-50' : '' }}"
     data-trip-id="{{ $trip->id }}"
     data-field="truck"
-    data-original="{{ $trip->displayTruckNumber() }}"
-    title="{{ $trip->isTruckOverridden() ? 'Overridden truck name (click to edit)' : 'Click to override truck name' }}">{{ $trip->displayTruckNumber() }}</td>
+    data-original="{{ $trip->displayTruckNumber() }}">
+    <div class="truck-override-wrap flex items-center justify-between gap-1 min-w-0">
+        <span class="truck-display truncate">{{ $trip->displayTruckNumber() }}</span>
+        <button type="button"
+            class="editTruckBtn shrink-0 bg-slate-600 text-white px-1.5 py-0.5 rounded text-[10px] leading-tight hover:bg-slate-700"
+            title="Edit truck name">
+            Edit
+        </button>
+    </div>
+</td>
 
 <td class="border p-2">{{ $trip->tripType }}</td>
 

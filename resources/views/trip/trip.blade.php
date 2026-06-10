@@ -63,7 +63,7 @@
 }
 #tripTable th:nth-child(2), #tripTable td:nth-child(2){width:150px;}
 #tripTable th:nth-child(3), #tripTable td:nth-child(3){width:110px;}
-#tripTable th:nth-child(4), #tripTable td:nth-child(4){width:90px;}
+#tripTable th:nth-child(4), #tripTable td:nth-child(4){width:120px;}
 #tripTable th:nth-child(5), #tripTable td:nth-child(5){width:85px;}
 #tripTable th:nth-child(6), #tripTable td:nth-child(6){width:90px;}
 #tripTable th:nth-child(7), #tripTable td:nth-child(7){width:95px;}
@@ -83,25 +83,26 @@
     background: #e5e7eb;
 }
 
-#tripTable td.editable-override{
-    cursor: text;
-}
-
-#tripTable td.editable-override.is-editing{
+#tripTable td.truck-override-cell.is-editing{
     outline: 2px solid #6366f1;
     background: #fff;
-    padding: 0;
+    padding: 4px;
 }
 
-#tripTable td.editable-override .override-input{
+#tripTable td.truck-override-cell .override-input{
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    border: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
     outline: none;
-    background: transparent;
+    background: #fff;
     font: inherit;
-    padding: 8px;
+    padding: 4px 6px;
+}
+
+#tripTable td.truck-override-cell .truck-display{
+    min-width: 0;
 }
 
 @media (max-width:1024px){
