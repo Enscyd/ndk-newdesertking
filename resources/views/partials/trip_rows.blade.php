@@ -15,7 +15,7 @@ $totalOmaniAmount += $trip->omaniAmount ?? 0;
 
 <tr id="row-{{ $trip->id }}">
 
-<td class="border px-1 py-2 w-auto text-center whitespace-nowrap">{{ $trip->id }}</td>
+<td class="border px-1 py-2 w-px text-center whitespace-nowrap">{{ $trip->id }}</td>
 
 <td class="border p-2">{{ $trip->destination->name ?? '' }}</td>
 

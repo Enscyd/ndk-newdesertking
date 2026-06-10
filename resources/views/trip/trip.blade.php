@@ -253,11 +253,15 @@ Export PDF
 
 <table class="w-full border text-xs" id="tripTable">
 
+<colgroup>
+<col class="w-px">
+</colgroup>
+
 <thead class="bg-gray-100">
 
 <tr>
 
-<th class="border px-1 py-2 w-auto text-center whitespace-nowrap">ID</th>
+<th class="border px-1 py-2 w-px text-center whitespace-nowrap">ID</th>
 <th class="border p-2">Destination</th>
 <th class="border p-2">Driver</th>
 <th class="border p-2">Truck</th>
