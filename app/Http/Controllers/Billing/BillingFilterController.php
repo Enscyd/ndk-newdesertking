@@ -103,7 +103,7 @@ class BillingFilterController extends Controller
                 'id'           => $trip->id,
                 'companyId'    => $trip->companyId, // 🔥 FIX
                 'companyName'  => $trip->company->name ?? 'N/A',
-                'vehicleNo'    => $trip->truck->truckNumber ?? 'N/A',
+                'vehicleNo'    => $trip->displayTruckNumber() ?: 'N/A',
                 'destination'  => $trip->destination->name ?? 'N/A',
                 'tripDate'     => optional($trip->tripDate)->format('Y-m-d'),
                 'tripAmount'   => $trip->tripAmount ?? 0,

@@ -242,6 +242,7 @@ model trips {
   omaniName     String?
   omaniAmount   Float?
   image         String?
+  overrides     Json?
 }
 
 model trucks {

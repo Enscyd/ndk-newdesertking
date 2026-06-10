@@ -137,7 +137,7 @@ $sr = 1;
 
 <td>{{ $trip->employee->employeeName ?? '' }}</td>
 
-<td class="center">{{ $trip->truck->truckNumber ?? '' }}</td>
+<td class="center">{{ $trip->displayTruckNumber() }}</td>
 
 <td class="center">{{ $trip->tripType }}</td>
 

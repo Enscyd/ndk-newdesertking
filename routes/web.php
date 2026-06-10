@@ -110,6 +110,7 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     Route::get('/trip/filter',[TripController::class,'filter'])->name('trip.filter');
     Route::get('/trip/{id}/edit',[TripController::class,'edit'])->name('trip.edit');
     Route::put('/trip/{id}',[TripController::class,'update'])->name('trip.update');
+    Route::patch('/trip/{id}/override',[TripController::class,'patchOverride'])->name('trip.override');
     Route::delete('/trip/{id}',[TripController::class,'destroy'])->name('trip.delete');
     Route::get('/fetch-trips',[TripController::class,'fetchTrips'])->name('fetchTrips');
     Route::get('/trip/pdf', [TripController::class,'downloadPDF'])->name('trip.pdf');

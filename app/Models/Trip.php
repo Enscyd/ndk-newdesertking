@@ -20,13 +20,18 @@ class Trip extends Model
         'isOmani',
         'omaniName',
         'omaniAmount',
-        'image'
+        'image',
+        'overrides',
     ];
 
     public $timestamps = false;
-        protected $casts = [
+
+    protected $casts = [
         'tripDate' => 'datetime',
+        'overrides' => 'array',
     ];
+
+    private const ALLOWED_OVERRIDE_FIELDS = ['truck'];
 
     public function company()
     {
@@ -48,9 +53,49 @@ class Trip extends Model
         return $this->belongsTo(Truck::class,'truckId');
     }
 
-    // NEW RELATIONSHIP (important)
     public function billingItems()
     {
         return $this->hasMany(\App\Models\BillingItem::class,'tripId');
+    }
+
+    public function displayTruckNumber(): string
+    {
+        $override = $this->overrides['truck'] ?? null;
+
+        if (is_string($override) && trim($override) !== '') {
+            return trim($override);
+        }
+
+        return $this->truck->truckNumber ?? '';
+    }
+
+    public function isTruckOverridden(): bool
+    {
+        $override = $this->overrides['truck'] ?? null;
+
+        return is_string($override) && trim($override) !== '';
+    }
+
+    public function setFieldOverride(string $field, ?string $value): void
+    {
+        if (!in_array($field, self::ALLOWED_OVERRIDE_FIELDS, true)) {
+            return;
+        }
+
+        $overrides = $this->overrides ?? [];
+
+        if ($value === null || trim($value) === '') {
+            unset($overrides[$field]);
+        } else {
+            $overrides[$field] = trim($value);
+        }
+
+        $this->overrides = empty($overrides) ? null : $overrides;
+        $this->save();
+    }
+
+    public function clearFieldOverride(string $field): void
+    {
+        $this->setFieldOverride($field, null);
     }
 }

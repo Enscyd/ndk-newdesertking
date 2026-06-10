@@ -426,4 +426,135 @@ $(document).ready(function(){
     });
 
 
+
+    /* ===============================
+       INLINE TRUCK OVERRIDE EDIT
+    =============================== */
+
+    let activeOverrideCell = null;
+
+    function exitOverrideEdit($cell, restoreText) {
+        if (!$cell || !$cell.length) return;
+
+        $cell.removeAttr('contenteditable')
+            .removeClass('is-editing');
+
+        if (restoreText !== undefined) {
+            $cell.text(restoreText);
+        }
+
+        if (activeOverrideCell && activeOverrideCell.is($cell)) {
+            activeOverrideCell = null;
+        }
+    }
+
+    function applyOverrideCellState($cell, displayText, isOverridden) {
+        $cell.text(displayText)
+            .attr('data-original', displayText)
+            .toggleClass('bg-amber-50', isOverridden)
+            .attr('title', isOverridden
+                ? 'Overridden truck name (click to edit)'
+                : 'Click to override truck name');
+    }
+
+    function saveTruckOverride($cell) {
+        const tripId = $cell.data('trip-id');
+        const originalText = String($cell.data('original') || '');
+        const newValue = $cell.text().trim();
+
+        if (newValue === originalText) {
+            exitOverrideEdit($cell, originalText);
+            return;
+        }
+
+        const confirmText = newValue === ''
+            ? 'Remove override and use linked truck name?'
+            : `Override truck name to "${newValue}"?`;
+
+        Swal.fire({
+            title: 'Update truck name?',
+            text: confirmText,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, update',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                exitOverrideEdit($cell, originalText);
+                return;
+            }
+
+            $.ajax({
+                url: '/trip/' + tripId + '/override',
+                type: 'PATCH',
+                data: {
+                    field: 'truck',
+                    value: newValue
+                },
+                success: function(res) {
+                    applyOverrideCellState($cell, res.displayTruckNumber, res.isOverridden);
+                    exitOverrideEdit($cell);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        timer: 900,
+                        showConfirmButton: false
+                    });
+                },
+                error: function() {
+                    Swal.fire('Error', 'Failed to update truck name', 'error');
+                    exitOverrideEdit($cell, originalText);
+                }
+            });
+        });
+    }
+
+    $(document).on('click', '#tripTableBody td.editable-override', function() {
+        const $cell = $(this);
+
+        if ($cell.attr('contenteditable') === 'true') {
+            return;
+        }
+
+        if (activeOverrideCell && !activeOverrideCell.is($cell)) {
+            exitOverrideEdit(activeOverrideCell, activeOverrideCell.data('original'));
+        }
+
+        activeOverrideCell = $cell;
+        $cell.attr('contenteditable', 'true')
+            .addClass('is-editing')
+            .focus();
+
+        const range = document.createRange();
+        range.selectNodeContents($cell[0]);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    });
+
+    $(document).on('keydown', '#tripTableBody td.editable-override[contenteditable="true"]', function(e) {
+        const $cell = $(this);
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveTruckOverride($cell);
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            exitOverrideEdit($cell, $cell.data('original'));
+        }
+    });
+
+    $(document).on('blur', '#tripTableBody td.editable-override[contenteditable="true"]', function() {
+        const $cell = $(this);
+        setTimeout(function() {
+            if ($cell.attr('contenteditable') === 'true') {
+                exitOverrideEdit($cell, $cell.data('original'));
+            }
+        }, 150);
+    });
+
+
 });

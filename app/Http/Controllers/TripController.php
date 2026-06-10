@@ -52,7 +52,9 @@ class TripController extends Controller
 
                     ->orWhereHas('truck',function($q5) use ($search){
                         $q5->where('truckNumber','like','%'.$search.'%');
-                    });
+                    })
+
+                    ->orWhere('overrides->truck', 'like', '%'.$search.'%');
 
                 });
 
@@ -260,6 +262,10 @@ class TripController extends Controller
             ]);
         }
 
+        if ((int) $request->truckId !== (int) $trip->truckId) {
+            $trip->clearFieldOverride('truck');
+        }
+
 
         $trip->update([
             'companyId'=>$request->companyId,
@@ -277,6 +283,26 @@ class TripController extends Controller
         ]);
 
         return $this->fetchTrips($request);
+    }
+
+
+
+    public function patchOverride(Request $request, $id)
+    {
+        $request->validate([
+            'field' => 'required|in:truck',
+            'value' => 'nullable|string|max:255',
+        ]);
+
+        $trip = Trip::with('truck')->findOrFail($id);
+
+        $trip->setFieldOverride($request->field, $request->value);
+
+        return response()->json([
+            'id' => $trip->id,
+            'displayTruckNumber' => $trip->displayTruckNumber(),
+            'isOverridden' => $trip->isTruckOverridden(),
+        ]);
     }
 
 

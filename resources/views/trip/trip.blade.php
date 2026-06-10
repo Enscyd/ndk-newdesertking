@@ -83,6 +83,15 @@
     background: #e5e7eb;
 }
 
+#tripTable td.editable-override{
+    cursor: text;
+}
+
+#tripTable td.editable-override.is-editing{
+    outline: 2px solid #6366f1;
+    background: #fff;
+}
+
 @media (max-width:1024px){
 
 #tripTable th,

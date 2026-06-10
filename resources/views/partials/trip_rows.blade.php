@@ -25,7 +25,11 @@ $serialNumber = method_exists($trips, 'total')
 
 <td class="border p-2">{{ $trip->employee->employeeName ?? '' }}</td>
 
-<td class="border p-2">{{ $trip->truck->truckNumber ?? '' }}</td>
+<td class="border p-2 editable-override {{ $trip->isTruckOverridden() ? 'bg-amber-50' : '' }}"
+    data-trip-id="{{ $trip->id }}"
+    data-field="truck"
+    data-original="{{ $trip->displayTruckNumber() }}"
+    title="{{ $trip->isTruckOverridden() ? 'Overridden truck name (click to edit)' : 'Click to override truck name' }}">{{ $trip->displayTruckNumber() }}</td>
 
 <td class="border p-2">{{ $trip->tripType }}</td>
 
