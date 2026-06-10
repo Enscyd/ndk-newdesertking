@@ -297,7 +297,9 @@ $(document).ready(function(){
             $('select[name="tripType"]').val(data.tripType);
 
             $('input[name="driverAmount"]').val(data.driverAmount);
-            $('input[name="tripDate"]').val(data.tripDate);
+            $('input[name="tripDate"]').val(
+                data.tripDate ? String(data.tripDate).substring(0, 10) : ''
+            );
             $('input[name="tripAmount"]').val(data.tripAmount);
 
             $('select[name="isOmani"]').val(data.isOmani);

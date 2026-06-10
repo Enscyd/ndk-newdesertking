@@ -211,7 +211,12 @@ class TripController extends Controller
             return response()->json(['error'=>'Trip not found'],404);
         }
 
-        return response()->json($trip);
+        $data = $trip->toArray();
+        $data['tripDate'] = $trip->tripDate
+            ? $trip->tripDate->format('Y-m-d')
+            : null;
+
+        return response()->json($data);
     }
 
 
