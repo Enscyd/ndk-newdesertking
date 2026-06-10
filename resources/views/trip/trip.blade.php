@@ -237,9 +237,9 @@ Save Trip
 <!-- FILTERS -->
 <div class="flex gap-2 mb-3">
 
-<input type="date" id="dateFilter" class="border px-2 py-1 rounded text-sm">
+<input type="date" id="dateFilter" value="" class="border px-2 py-1 rounded text-sm">
 
-<input type="month" id="monthFilter" class="border px-2 py-1 rounded text-sm">
+<input type="month" id="monthFilter" value="{{ now()->format('Y-m') }}" data-default-month="{{ now()->format('Y-m') }}" class="border px-2 py-1 rounded text-sm">
 
 
 <select id="companyFilter" class="border px-2 py-1 rounded text-sm">

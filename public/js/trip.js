@@ -10,11 +10,9 @@ $(document).ready(function(){
        SET CURRENT MONTH ON PAGE LOAD
     =============================== */
 
-    let now = new Date();
-    let currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-
     function setDefaultMonthFilter() {
-        $('#monthFilter').val(currentMonth);
+        const defaultMonth = $('#monthFilter').data('default-month') || '';
+        $('#monthFilter').val(defaultMonth);
         $('#dateFilter').val('');
     }
 
@@ -86,6 +84,8 @@ $(document).ready(function(){
     $('#dateFilter').change(function(){
         if($(this).val() !== ''){
             $('#monthFilter').val('');
+        } else {
+            setDefaultMonthFilter();
         }
         loadTrips();
     });
