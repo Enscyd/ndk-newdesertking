@@ -7,11 +7,18 @@ $(document).ready(function(){
 
 
     /* ===============================
-       SET TODAY DATE ON PAGE LOAD
+       SET CURRENT MONTH ON PAGE LOAD
     =============================== */
 
-    let today = new Date().toISOString().split('T')[0];
-    $('#dateFilter').val(today);
+    let now = new Date();
+    let currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+    function setDefaultMonthFilter() {
+        $('#monthFilter').val(currentMonth);
+        $('#dateFilter').val('');
+    }
+
+    setDefaultMonthFilter();
 
 
     /* ===============================
@@ -44,7 +51,7 @@ $(document).ready(function(){
     }
 
 
-    // Load today's trips on first page load
+    // Load current month's trips on first page load
     loadTrips();
 
 
@@ -240,9 +247,8 @@ $(document).ready(function(){
 
                 $('#previewImage').addClass('hidden');
 
-                // Reset today's date again after form reset
-                $('#dateFilter').val(today);
-                $('#monthFilter').val('');
+                // Reset to current month filter after form reset
+                setDefaultMonthFilter();
 
                 // Reload table
                 loadTrips();

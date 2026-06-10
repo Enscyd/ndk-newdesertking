@@ -83,17 +83,19 @@ class TripController extends Controller
 
             }
 
-            /* DEFAULT = TODAY */
+            /* DEFAULT = CURRENT MONTH */
             else{
 
-                $query->whereDate('tripDate',Carbon::today());
+                $query->whereMonth('tripDate', Carbon::now()->month)
+                    ->whereYear('tripDate', Carbon::now()->year);
 
             }
 
         }
         else{
 
-            $query->whereDate('tripDate',Carbon::today());
+            $query->whereMonth('tripDate', Carbon::now()->month)
+                ->whereYear('tripDate', Carbon::now()->year);
 
         }
 
