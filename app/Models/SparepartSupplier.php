@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SparePartSupplier extends Model
+class SparepartSupplier extends Model
 {
     protected $table = 'sparepart_supplier';
     public $timestamps = false;
@@ -17,6 +17,6 @@ class SparePartSupplier extends Model
 
     public function stocks()
     {
-        return $this->hasMany(SparePartStock::class, 'supplier_id');
+        return $this->hasMany(SparepartStock::class, 'supplier_id');
     }
 }

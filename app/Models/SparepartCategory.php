@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SparePartCategory extends Model
+class SparepartCategory extends Model
 {
     protected $table = 'sparepart_category';
     public $timestamps = false;
@@ -16,6 +16,6 @@ class SparePartCategory extends Model
 
     public function spareparts()
     {
-        return $this->hasMany(SparePart::class, 'category_id');
+        return $this->hasMany(Sparepart::class, 'category_id');
     }
 }
