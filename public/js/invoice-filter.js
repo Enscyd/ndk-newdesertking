@@ -59,6 +59,21 @@ function getPrintUrl(invoiceId, date) {
     return `${base}/${invoiceId}?date=${encodeURIComponent(date)}`;
 }
 
+function confirmPrintInvoice() {
+    if (!pendingPrintId) return;
+
+    const date = document.getElementById('printDateInput')?.value;
+    if (!date) {
+        alert('Please select a date');
+        return;
+    }
+
+    const printUrl = getPrintUrl(pendingPrintId, date);
+    // Open before closing modal so the browser treats it as a direct user action.
+    window.open(printUrl, '_blank');
+    closePrintModal();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const printDateInput = document.getElementById('printDateInput');
 
@@ -77,8 +92,20 @@ document.addEventListener('DOMContentLoaded', function() {
         printModalIgnoreBackdrop = false;
     });
 
-    document.getElementById('printDatePanel')?.addEventListener('click', function(e) {
-        e.stopPropagation();
+    document.getElementById('confirmPrintBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        confirmPrintInvoice();
+    });
+
+    document.getElementById('cancelPrintBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        closePrintModal();
+    });
+
+    document.getElementById('printDateBackdrop')?.addEventListener('click', function() {
+        if (!printModalIgnoreBackdrop) {
+            closePrintModal();
+        }
     });
 });
 
@@ -88,34 +115,6 @@ document.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         openPrintModal(printBtn.dataset.id, printBtn.dataset.date);
-        return;
-    }
-
-    if (e.target.closest('#cancelPrintBtn')) {
-        e.preventDefault();
-        closePrintModal();
-        return;
-    }
-
-    if (e.target.closest('#confirmPrintBtn')) {
-        e.preventDefault();
-
-        if (!pendingPrintId) return;
-
-        const date = document.getElementById('printDateInput')?.value;
-        if (!date) {
-            alert('Please select a date');
-            return;
-        }
-
-        const printUrl = getPrintUrl(pendingPrintId, date);
-        closePrintModal();
-        window.open(printUrl, '_blank');
-        return;
-    }
-
-    if (e.target.id === 'printDateBackdrop' && !printModalIgnoreBackdrop) {
-        closePrintModal();
     }
 });
 
