@@ -111,7 +111,7 @@ class TripController extends Controller
         $employees = Employee::all();
         $trucks = Truck::all();
 
-        $trips = $this->queryTrips()->paginate(20);
+        $trips = $this->queryTrips()->paginate(100);
 
         return view('trip.trip',compact(
             'companies',
@@ -127,7 +127,7 @@ class TripController extends Controller
     public function fetchTrips(Request $request)
     {
 
-        $trips = $this->queryTrips($request)->paginate(20);
+        $trips = $this->queryTrips($request)->paginate(100);
 
         return view('partials.trip_rows',compact('trips'))->render();
     }
