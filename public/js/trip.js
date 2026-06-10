@@ -428,159 +428,54 @@ $(document).ready(function(){
 
 
     /* ===============================
-       INLINE TRUCK OVERRIDE EDIT
+       TRUCK OVERRIDE — DIALOG EDIT
     =============================== */
 
-    let activeOverrideCell = null;
-    let overrideSavePending = false;
-
-    function renderTruckCellDisplay($cell, displayText, isOverridden) {
-        const safeText = $('<div>').text(displayText).html();
-
-        $cell.removeClass('is-editing')
-            .toggleClass('bg-amber-50', isOverridden)
-            .attr('data-original', displayText)
-            .html(
-                '<div class="truck-override-wrap flex items-center justify-between gap-1 min-w-0">' +
-                    '<span class="truck-display truncate">' + safeText + '</span>' +
-                    '<button type="button" class="editTruckBtn shrink-0 bg-slate-600 text-white px-1.5 py-0.5 rounded text-[10px] leading-tight hover:bg-slate-700" title="Edit truck name">Edit</button>' +
-                '</div>'
-            );
-
-        if (activeOverrideCell && activeOverrideCell.is($cell)) {
-            activeOverrideCell = null;
-        }
-    }
-
-    function cancelOverrideEdit($cell) {
-        if (!$cell || !$cell.length || !$cell.hasClass('is-editing')) return;
-
-        const originalText = String($cell.data('original') || '');
-        const isOverridden = Boolean($cell.data('is-overridden'));
-
-        renderTruckCellDisplay($cell, originalText, isOverridden);
-    }
-
-    function applyOverrideCellState($cell, displayText, isOverridden) {
-        renderTruckCellDisplay($cell, displayText, isOverridden);
-    }
-
-    function startOverrideEdit($cell) {
-        if (!$cell.length || $cell.hasClass('is-editing')) {
-            return;
-        }
-
-        if (activeOverrideCell && !activeOverrideCell.is($cell)) {
-            cancelOverrideEdit(activeOverrideCell);
-        }
-
-        activeOverrideCell = $cell;
-        const originalText = String($cell.data('original') || $cell.find('.truck-display').text().trim());
-        const isOverridden = $cell.hasClass('bg-amber-50');
-
-        $cell.addClass('is-editing')
-            .data('original', originalText)
-            .data('is-overridden', isOverridden)
-            .removeClass('bg-amber-50')
-            .html(
-                '<div class="truck-override-edit flex flex-col gap-1">' +
-                    '<input type="text" class="override-input" value="">' +
-                    '<div class="flex gap-1 justify-end">' +
-                        '<button type="button" class="saveTruckBtn bg-green-600 text-white px-2 py-0.5 rounded text-[10px] hover:bg-green-700">Save</button>' +
-                        '<button type="button" class="cancelTruckBtn bg-gray-500 text-white px-2 py-0.5 rounded text-[10px] hover:bg-gray-600">Cancel</button>' +
-                    '</div>' +
-                '</div>'
-            );
-
-        const $input = $cell.find('.override-input');
-        $input.val(originalText).trigger('focus')[0].select();
-
-        $input.on('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveTruckOverride($cell, $input.val());
-            }
-
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                cancelOverrideEdit($cell);
-            }
-        });
-    }
-
-    function saveTruckOverride($cell, rawValue) {
+    $(document).on('click', '#tripTableBody .truck-override-cell', function() {
+        const $cell = $(this);
         const tripId = $cell.data('trip-id');
-        const originalText = String($cell.data('original') || '');
-        const newValue = String(rawValue || '').trim();
-
-        if (newValue === originalText) {
-            cancelOverrideEdit($cell);
-            return;
-        }
-
-        const confirmText = newValue === ''
-            ? 'Remove override and use linked truck name?'
-            : `Override truck name to "${newValue}"?`;
-
-        overrideSavePending = true;
+        const currentText = String($cell.data('original') || $cell.text().trim());
 
         Swal.fire({
-            title: 'Update truck name?',
-            text: confirmText,
-            icon: 'question',
+            title: 'Override Truck Name',
+            input: 'text',
+            inputValue: currentText,
+            inputPlaceholder: 'Enter truck name (leave empty to revert)',
             showCancelButton: true,
-            confirmButtonText: 'Yes, update',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            overrideSavePending = false;
-
-            if (!result.isConfirmed) {
-                cancelOverrideEdit($cell);
-                return;
+            confirmButtonText: 'Save',
+            cancelButtonText: 'Cancel',
+            inputAttributes: { autocomplete: 'off' },
+            preConfirm: function(value) {
+                return value;
             }
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            const newValue = String(result.value || '').trim();
+
+            if (newValue === currentText) return;
 
             $.ajax({
                 url: '/trip/' + tripId + '/override',
                 type: 'PATCH',
-                data: {
-                    field: 'truck',
-                    value: newValue
-                },
+                data: { field: 'truck', value: newValue },
                 success: function(res) {
-                    applyOverrideCellState($cell, res.displayTruckNumber, res.isOverridden);
+                    $cell.text(res.displayTruckNumber)
+                        .attr('data-original', res.displayTruckNumber)
+                        .toggleClass('bg-amber-50', res.isOverridden);
 
                     Swal.fire({
                         icon: 'success',
-                        title: 'Updated',
-                        timer: 900,
+                        title: 'Truck name updated',
+                        timer: 1000,
                         showConfirmButton: false
                     });
                 },
                 error: function() {
                     Swal.fire('Error', 'Failed to update truck name', 'error');
-                    cancelOverrideEdit($cell);
                 }
             });
         });
-    }
-
-    $(document).on('click', '#tripTableBody .editTruckBtn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        startOverrideEdit($(this).closest('.truck-override-cell'));
-    });
-
-    $(document).on('click', '#tripTableBody .saveTruckBtn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const $cell = $(this).closest('.truck-override-cell');
-        saveTruckOverride($cell, $cell.find('.override-input').val());
-    });
-
-    $(document).on('click', '#tripTableBody .cancelTruckBtn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        cancelOverrideEdit($(this).closest('.truck-override-cell'));
     });
 
 

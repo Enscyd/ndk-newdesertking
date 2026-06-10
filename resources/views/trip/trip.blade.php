@@ -83,26 +83,8 @@
     background: #e5e7eb;
 }
 
-#tripTable td.truck-override-cell.is-editing{
-    outline: 2px solid #6366f1;
-    background: #fff;
-    padding: 4px;
-}
-
-#tripTable td.truck-override-cell .override-input{
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    outline: none;
-    background: #fff;
-    font: inherit;
-    padding: 4px 6px;
-}
-
-#tripTable td.truck-override-cell .truck-display{
-    min-width: 0;
+#tripTable td.truck-override-cell{
+    cursor: pointer;
 }
 
 @media (max-width:1024px){
