@@ -90,6 +90,18 @@
 #tripTable td.editable-override.is-editing{
     outline: 2px solid #6366f1;
     background: #fff;
+    padding: 0;
+}
+
+#tripTable td.editable-override .override-input{
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    padding: 8px;
 }
 
 @media (max-width:1024px){
