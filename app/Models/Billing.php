@@ -33,7 +33,9 @@ class Billing extends Model
 
     public function items()
     {
-        return $this->hasMany(BillingItem::class, 'billingId'); // ✅ correct
+        return $this->hasMany(BillingItem::class, 'billingId')
+            ->orderBy('tripDate')
+            ->orderBy('id');
     }
 
     public function company()
