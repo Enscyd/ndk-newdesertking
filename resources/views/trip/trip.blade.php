@@ -257,7 +257,7 @@ Export PDF
 
 <tr>
 
-<th class="border p-2">Company</th>
+<th class="border p-2">ID</th>
 <th class="border p-2">Destination</th>
 <th class="border p-2">Driver</th>
 <th class="border p-2">Truck</th>
@@ -269,6 +269,7 @@ Export PDF
 <th class="border p-2">Omani<br>Name</th>
 <th class="border p-2">Omani Amount</th>
 <th class="border p-2">Image</th>
+<th class="border p-2">Company</th>
 <th class="border p-2">Actions</th>
 
 </tr>

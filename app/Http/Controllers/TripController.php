@@ -20,6 +20,7 @@ class TripController extends Controller
     {
 
         $query = Trip::with(['company','destination','employee','truck'])
+            ->orderBy('tripDate','desc')
             ->orderBy('id','desc');
 
         if($request){

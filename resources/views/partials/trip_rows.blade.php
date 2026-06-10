@@ -15,7 +15,7 @@ $totalOmaniAmount += $trip->omaniAmount ?? 0;
 
 <tr id="row-{{ $trip->id }}">
 
-<td class="border p-2">{{ $trip->company->name ?? '' }}</td>
+<td class="border p-2">{{ $trip->id }}</td>
 
 <td class="border p-2">{{ $trip->destination->name ?? '' }}</td>
 
@@ -51,6 +51,8 @@ data-src="{{ asset('storage/'.$trip->image) }}">
 
 </td>
 
+<td class="border p-2">{{ $trip->company->name ?? '' }}</td>
+
 <td class="border p-2 space-x-1">
 
 <button class="editBtn bg-blue-600 text-white px-2 py-1 rounded text-xs"
@@ -74,7 +76,7 @@ Delete
 <!-- TOTAL ROW -->
 <tr class="bg-gray-200 font-bold">
 
-<td colspan="5" class="border p-2 text-right">
+<td colspan="6" class="border p-2 text-right">
 Totals
 </td>
 
@@ -100,6 +102,8 @@ Totals
 
 <td class="border p-2"></td>
 
+<td class="border p-2"></td>
+
 </tr>
 
 
@@ -108,7 +112,7 @@ Totals
 
 <tr>
 
-<td colspan="13" class="p-3 text-center">
+<td colspan="14" class="p-3 text-center">
 
 <div class="pagination">
     {{ $trips->links() }}
