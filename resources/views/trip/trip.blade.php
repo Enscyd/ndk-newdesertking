@@ -51,20 +51,37 @@
     background: #f9fafb;
 }
 
-/* column widths */
-#tripTable th:nth-child(1), #tripTable td:nth-child(1){width:190px;}
+/* column widths (14 columns) */
+#tripTable th:nth-child(1), #tripTable td:nth-child(1){
+    width: 3rem;
+    min-width: 3rem;
+    max-width: 3.5rem;
+    text-align: center;
+    white-space: nowrap;
+    padding-left: 4px;
+    padding-right: 4px;
+}
 #tripTable th:nth-child(2), #tripTable td:nth-child(2){width:150px;}
-#tripTable th:nth-child(3), #tripTable td:nth-child(3){width:100px;}
-#tripTable th:nth-child(4), #tripTable td:nth-child(4){width:100px;}
-#tripTable th:nth-child(5), #tripTable td:nth-child(5){width:80px;}
-#tripTable th:nth-child(6), #tripTable td:nth-child(6){width:80px;}
-#tripTable th:nth-child(7), #tripTable td:nth-child(7){width:110px;}
-#tripTable th:nth-child(8), #tripTable td:nth-child(8){width:100px;}
-#tripTable th:nth-child(9), #tripTable td:nth-child(9){width:60px;}
-#tripTable th:nth-child(10), #tripTable td:nth-child(10){width:120px;}
-#tripTable th:nth-child(11), #tripTable td:nth-child(11){width:100px;}
+#tripTable th:nth-child(3), #tripTable td:nth-child(3){width:110px;}
+#tripTable th:nth-child(4), #tripTable td:nth-child(4){width:90px;}
+#tripTable th:nth-child(5), #tripTable td:nth-child(5){width:85px;}
+#tripTable th:nth-child(6), #tripTable td:nth-child(6){width:90px;}
+#tripTable th:nth-child(7), #tripTable td:nth-child(7){width:95px;}
+#tripTable th:nth-child(8), #tripTable td:nth-child(8){width:90px;}
+#tripTable th:nth-child(9), #tripTable td:nth-child(9){width:55px;}
+#tripTable th:nth-child(10), #tripTable td:nth-child(10){width:100px;}
+#tripTable th:nth-child(11), #tripTable td:nth-child(11){width:90px;}
 #tripTable th:nth-child(12), #tripTable td:nth-child(12){width:70px;}
-#tripTable th:nth-child(13), #tripTable td:nth-child(13){width:120px;}
+#tripTable th:nth-child(13), #tripTable td:nth-child(13){width:150px;}
+#tripTable th:nth-child(14), #tripTable td:nth-child(14){width:120px; min-width:120px;}
+
+#tripTable tbody tr:hover td:last-child{
+    background: #f9fafb;
+}
+
+#tripTable tr.bg-gray-200 td:last-child{
+    background: #e5e7eb;
+}
 
 @media (max-width:1024px){
 
@@ -253,15 +270,11 @@ Export PDF
 
 <table class="w-full border text-xs" id="tripTable">
 
-<colgroup>
-<col class="w-px">
-</colgroup>
-
 <thead class="bg-gray-100">
 
 <tr>
 
-<th class="border px-1 py-2 w-px text-center whitespace-nowrap">ID</th>
+<th class="border p-2">ID</th>
 <th class="border p-2">Destination</th>
 <th class="border p-2">Driver</th>
 <th class="border p-2">Truck</th>
