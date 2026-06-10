@@ -75,7 +75,7 @@
 
     <div>
         <label class="text-xs text-gray-500">Trip Date</label>
-        <input type="date" name="tripDate" max="{{ date('Y-m-d') }}" class="w-full border rounded-xl px-3 py-4 text-sm mt-1" required>
+        <input type="date" id="tripDate" name="tripDate" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" class="w-full border rounded-xl px-3 py-4 text-sm mt-1" required>
     </div>
 
     <div>
@@ -121,6 +121,14 @@
 $.ajaxSetup({
     headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
 });
+
+function setDefaultTripDate() {
+    let today = new Date();
+    let formatted = today.getFullYear() + '-' +
+        String(today.getMonth() + 1).padStart(2, '0') + '-' +
+        String(today.getDate()).padStart(2, '0');
+    $('#tripDate').val(formatted).attr('max', formatted);
+}
 
 function toggleTripType() {
     let isReturn = $('#tripType').val() === 'Return Trip';
@@ -175,6 +183,7 @@ $('#tripForm').on('submit', function(e){
         success: function(){
             Swal.fire('Saved!', 'Trip added successfully', 'success');
             form.reset();
+            setDefaultTripDate();
             $('#previewImage').addClass('hidden').attr('src', '');
             toggleTripType();
             toggleOmani();
@@ -188,6 +197,7 @@ $('#tripForm').on('submit', function(e){
     });
 });
 
+setDefaultTripDate();
 toggleTripType();
 toggleOmani();
 </script>
