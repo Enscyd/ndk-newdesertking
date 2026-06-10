@@ -42,7 +42,8 @@ class BillingFilterController extends Controller
                 'destinationId',
                 'truckId',
                 'tripDate',
-                'tripAmount'
+                'tripAmount',
+                'overrides',
             ]);
 
 
