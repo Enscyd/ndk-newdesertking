@@ -257,7 +257,7 @@ Export PDF
 
 <tr>
 
-<th class="border p-2">ID</th>
+<th class="border px-1 py-2 w-auto text-center whitespace-nowrap">ID</th>
 <th class="border p-2">Destination</th>
 <th class="border p-2">Driver</th>
 <th class="border p-2">Truck</th>
