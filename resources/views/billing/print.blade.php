@@ -179,6 +179,7 @@ th {
     $totalTaxable = 0;
     $totalVat = 0;
     $grandTotal = 0;
+    $serialNo = 0;
 @endphp
 
 @foreach($pages as $pageIndex => $pageItems)
@@ -232,8 +233,9 @@ th {
 
                 <tbody>
 
-                @foreach($pageItems as $i => $item)
+                @foreach($pageItems as $item)
                 @php
+                    $serialNo++;
                     $totalQty += $item->quantity;
                     $totalRent += $item->rent;
                     $totalTaxable += $item->taxableAmount;
@@ -242,7 +244,7 @@ th {
                 @endphp
 
                 <tr class="data-row">
-                    <td>{{ ($pageIndex * $rowsPerPage) + $i + 1 }}</td>
+                    <td>{{ $serialNo }}</td>
                     <td>{{ $item->tripDate ? \Carbon\Carbon::parse($item->tripDate)->format('d-m-Y') : \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</td>
                     <td class="left">{{ $item->description }}</td>
                     <td>{{ $item->vehicleNo }}</td>
