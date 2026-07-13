@@ -120,7 +120,7 @@
 
     <td class="p-3 border text-center">{{ $i+1 }}</td>
 
-    <td class="p-3 border text-center whitespace-nowrap">
+    <td class="p-3 border text-center whitespace-nowrap" data-date="{{ $item->tripDate ? \Carbon\Carbon::parse($item->tripDate)->format('Y-m-d') : '' }}">
         {{ $item->tripDate ? \Carbon\Carbon::parse($item->tripDate)->format('d M Y') : '-' }}
     </td>
 

@@ -315,13 +315,17 @@ document.addEventListener('click', function(e){
     const row = btn.closest('tr');
     const cells = row.querySelectorAll('td');
 
-    for(let i = 2; i <= 8; i++){
+    for(let i = 1; i <= 8; i++){
 
         const val = cells[i].innerText.trim();
 
         let input = '';
 
-        if(i === 4) input = `<input class="qty border p-1 w-full" value="${val}">`;
+        if(i === 1) {
+            const rawDate = cells[i].dataset.date || '';
+            input = `<input type="date" class="trip-date border p-1 w-full" value="${rawDate}">`;
+        }
+        else if(i === 4) input = `<input class="qty border p-1 w-full" value="${val}">`;
         else if(i === 5) input = `<input class="rent border p-1 w-full" value="${val}">`;
         else if(i === 6) input = `<input class="taxable border p-1 w-full bg-gray-100" value="${val}" readonly>`;
         else if(i === 7) input = `<input class="vat border p-1 w-full bg-gray-100" value="${val}" readonly>`;
@@ -393,6 +397,7 @@ document.addEventListener('click', function(e){
     const id = btn.dataset.id;
 
     const data = {
+        tripDate: row.querySelector('.trip-date')?.value || '',
         description: row.querySelector('.description')?.value || '',
         vehicleNo: row.querySelector('.vehicleNo')?.value || '',
         quantity: row.querySelector('.qty')?.value || 0,

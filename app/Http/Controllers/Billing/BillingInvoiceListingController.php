@@ -144,7 +144,22 @@ class BillingInvoiceListingController extends Controller
     public function deleteItem($id)
     {
         try {
-            BillingItem::where('id', $id)->delete();
+            $item = BillingItem::findOrFail($id);
+            $billingId = $item->billingId;
+            
+            $item->delete();
+
+            // Recalculate parent billing grand total
+            $billing = Billing::findOrFail($billingId);
+            $grandTotal = BillingItem::where('billingId', $billingId)->sum('totalAmount');
+            
+            // Recalculate parent billing date (maximum of all items' tripDate)
+            $maxTripDate = BillingItem::where('billingId', $billingId)->max('tripDate');
+
+            $billing->update([
+                'grandTotal' => $grandTotal,
+                'date' => $maxTripDate ? \Carbon\Carbon::parse($maxTripDate) : $billing->date
+            ]);
 
             return response()->json(['success' => true]);
 
@@ -190,6 +205,7 @@ class BillingInvoiceListingController extends Controller
             $item = BillingItem::findOrFail($id);
 
             $item->update([
+                'tripDate'      => $request->tripDate ? \Carbon\Carbon::parse($request->tripDate) : null,
                 'description'   => $request->description,
                 'vehicleNo'     => $request->vehicleNo,
                 'quantity'      => $request->quantity,
@@ -197,6 +213,18 @@ class BillingInvoiceListingController extends Controller
                 'taxableAmount' => $request->taxableAmount,
                 'vat'           => $request->vat,
                 'totalAmount'   => $request->totalAmount,
+            ]);
+
+            // Recalculate parent billing grand total
+            $billing = Billing::findOrFail($item->billingId);
+            $grandTotal = BillingItem::where('billingId', $billing->id)->sum('totalAmount');
+            
+            // Recalculate parent billing date (maximum of all items' tripDate)
+            $maxTripDate = BillingItem::where('billingId', $billing->id)->max('tripDate');
+
+            $billing->update([
+                'grandTotal' => $grandTotal,
+                'date' => $maxTripDate ? \Carbon\Carbon::parse($maxTripDate) : $billing->date
             ]);
 
             return response()->json(['success' => true]);
