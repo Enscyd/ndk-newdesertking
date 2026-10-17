@@ -9,16 +9,31 @@ function getCSRF() {
 /* ADD ITEM */
 function addItem() {
     let desc = document.getElementById('description').value.trim();
+    let qty = parseFloat(document.getElementById('qty').value);
+    let rate = parseFloat(document.getElementById('rate').value);
     let price = parseFloat(document.getElementById('price').value);
 
-    if (!desc || isNaN(price) || price <= 0) {
-        alert('Please enter valid item details');
+    if (isNaN(qty) || qty <= 0) qty = 1;
+
+    if (isNaN(price) && !isNaN(rate)) {
+        price = qty * rate;
+    } else if (isNaN(rate) && !isNaN(price)) {
+        rate = price / qty;
+    }
+
+    if (!desc || isNaN(price) || price < 0) {
+        alert('Please enter a valid description and rate/amount');
         return;
     }
 
-    items.push({ description: desc, price: price });
+    price = Math.round(price * 1000) / 1000;
+    rate = Math.round(rate * 1000) / 1000;
+
+    items.push({ description: desc, qty: qty, rate: rate, price: price });
 
     document.getElementById('description').value = '';
+    document.getElementById('qty').value = '1';
+    document.getElementById('rate').value = '';
     document.getElementById('price').value = '';
 
     renderTable();
@@ -42,16 +57,18 @@ function renderTable() {
 
         html += '<tr>' +
             '<td>' + item.description + '</td>' +
-            '<td>' + item.price + '</td>' +
+            '<td>' + item.qty + '</td>' +
+            '<td>' + Number(item.rate).toFixed(3) + '</td>' +
+            '<td>' + Number(item.price).toFixed(3) + '</td>' +
             '<td>' +
-                '<button onclick="deleteItem(' + i + ')" ' +
-                'style="background:#dc2626;color:white;padding:4px 8px;border:none;border-radius:5px;">Delete</button>' +
+                '<button type="button" onclick="deleteItem(' + i + ')" ' +
+                'style="background:#dc2626;color:white;padding:3px 6px;border:none;border-radius:4px;cursor:pointer;">✕</button>' +
             '</td>' +
         '</tr>';
     });
 
     document.getElementById('itemsTable').innerHTML = html;
-    document.getElementById('total_amount').value = total;
+    document.getElementById('total_amount').value = Math.round(total * 1000) / 1000;
     document.getElementById('itemsInput').value = JSON.stringify(items);
 }
 
@@ -159,9 +176,11 @@ function deleteItemServer(id) {
 }
 
 /* OPEN MODAL */
-function editItem(id, description, price) {
+function editItem(id, description, qty, rate, price) {
     document.getElementById('edit_item_id').value = id;
     document.getElementById('edit_description').value = description || '';
+    document.getElementById('edit_qty').value = qty || 1;
+    document.getElementById('edit_rate').value = rate || price || 0;
     document.getElementById('edit_price').value = price || 0;
 
     document.getElementById('editItemModal').style.display = 'flex';
@@ -177,9 +196,15 @@ function updateItem() {
 
     let id = document.getElementById('edit_item_id').value;
     let description = document.getElementById('edit_description').value.trim();
+    let qty = parseFloat(document.getElementById('edit_qty').value) || 1;
+    let rate = parseFloat(document.getElementById('edit_rate').value) || 0;
     let price = parseFloat(document.getElementById('edit_price').value);
 
-    if (!description || isNaN(price)) {
+    if (isNaN(price)) {
+        price = qty * rate;
+    }
+
+    if (!description || isNaN(price) || price < 0) {
         alert('Invalid data');
         return;
     }
@@ -190,7 +215,7 @@ function updateItem() {
             'X-CSRF-TOKEN': getCSRF(),
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ description, price })
+        body: JSON.stringify({ description, qty, rate, price })
     })
     .then(res => res.json())
     .then(data => {
@@ -204,7 +229,20 @@ function updateItem() {
 
         if (row) {
             row.querySelector('.item-desc').innerText = description;
-            row.querySelector('.item-price').innerText = price;
+            let qtyEl = row.querySelector('.item-qty');
+            if (qtyEl) qtyEl.innerText = qty;
+            let rateEl = row.querySelector('.item-rate');
+            if (rateEl) rateEl.innerText = Number(rate).toFixed(3);
+            let priceEl = row.querySelector('.item-price');
+            if (priceEl) priceEl.innerText = Number(price).toFixed(3);
+
+            let editBtn = row.querySelector('.btn-edit');
+            if (editBtn) {
+                editBtn.dataset.description = description;
+                editBtn.dataset.qty = qty;
+                editBtn.dataset.rate = rate;
+                editBtn.dataset.price = price;
+            }
 
             updateBillTotal(row);
 
@@ -235,9 +273,9 @@ function updateBillTotal(row) {
     if (billRow) {
         let totalCell = billRow.querySelector('.bill-total');
         if (totalCell) {
-            totalCell.innerText = total;
+            totalCell.innerText = total.toFixed(3);
         } else if (billRow.children[4]) {
-            billRow.children[4].innerText = total;
+            billRow.children[4].innerText = total.toFixed(3);
         }
     }
 }
@@ -245,9 +283,11 @@ function updateBillTotal(row) {
 function handleEditItem(btn) {
     const id = btn.dataset.id;
     const description = btn.dataset.description;
+    const qty = btn.dataset.qty;
+    const rate = btn.dataset.rate;
     const price = btn.dataset.price;
 
-    editItem(id, description, price);
+    editItem(id, description, qty, rate, price);
 }
 
 //////////////////////////////////////////////////////////////
@@ -317,4 +357,43 @@ if (descriptionInput && suggestionsBox) {
             suggestionsBox.style.display = 'none';
         }
     });
+}
+
+// Auto-calculate Amount = Qty * Rate on input
+function initAutoCalc() {
+    const q = document.getElementById('qty');
+    const r = document.getElementById('rate');
+    const p = document.getElementById('price');
+    if (q && r && p) {
+        const recalc = () => {
+            const qVal = parseFloat(q.value) || 0;
+            const rVal = parseFloat(r.value) || 0;
+            if (qVal > 0 && rVal >= 0) {
+                p.value = (qVal * rVal).toFixed(3);
+            }
+        };
+        q.addEventListener('input', recalc);
+        r.addEventListener('input', recalc);
+    }
+
+    const eq = document.getElementById('edit_qty');
+    const er = document.getElementById('edit_rate');
+    const ep = document.getElementById('edit_price');
+    if (eq && er && ep) {
+        const recalcEdit = () => {
+            const qVal = parseFloat(eq.value) || 0;
+            const rVal = parseFloat(er.value) || 0;
+            if (qVal > 0 && rVal >= 0) {
+                ep.value = (qVal * rVal).toFixed(3);
+            }
+        };
+        eq.addEventListener('input', recalcEdit);
+        er.addEventListener('input', recalcEdit);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAutoCalc);
+} else {
+    initAutoCalc();
 }

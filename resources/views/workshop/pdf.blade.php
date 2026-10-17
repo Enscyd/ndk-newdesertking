@@ -129,9 +129,11 @@
             <table class="invoice-table">
                 <thead>
                     <tr>
-                        <th style="width:10%">#</th>
-                        <th style="width:65%">Description</th>
-                        <th style="width:25%">Amount</th>
+                        <th style="width:8%">S.No</th>
+                        <th style="width:47%">Description</th>
+                        <th style="width:13%">Qty</th>
+                        <th style="width:16%">Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})</th>
+                        <th style="width:16%">Amount ({{ \App\Helpers\CurrencyHelper::symbol() }})</th>
                     </tr>
                 </thead>
 
@@ -148,10 +150,17 @@
                     @endphp
 
                     @foreach($items as $index => $item)
+                    @php
+                        $itemQty = isset($item->qty) && (float)$item->qty > 0 ? (float)$item->qty : 1;
+                        $itemRate = isset($item->rate) && (float)$item->rate > 0 ? (float)$item->rate : (float)($item->price ?? 0);
+                        $itemAmount = isset($item->price) ? (float)$item->price : ($itemQty * $itemRate);
+                    @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td class="left">{{ $item->description ?? '' }}</td>
-                        <td>{{ number_format($item->price ?? 0, 2) }}</td>
+                        <td>{{ $itemQty == (int)$itemQty ? (int)$itemQty : number_format($itemQty, 2) }}</td>
+                        <td>{{ number_format($itemRate, 3) }}</td>
+                        <td>{{ number_format($itemAmount, 3) }}</td>
                     </tr>
                     @endforeach
 
@@ -159,11 +168,13 @@
                         <td style="height: {{ $blankHeight }}px;">&nbsp;</td>
                         <td style="height: {{ $blankHeight }}px;"></td>
                         <td style="height: {{ $blankHeight }}px;"></td>
+                        <td style="height: {{ $blankHeight }}px;"></td>
+                        <td style="height: {{ $blankHeight }}px;"></td>
                     </tr>
 
                     <tr class="total-row">
-                        <td colspan="2">TOTAL</td>
-                        <td>Rs {{ number_format($bill->total_amount ?? 0, 2) }}</td>
+                        <td colspan="4">TOTAL</td>
+                        <td>{{ \App\Helpers\CurrencyHelper::format($bill->total_amount ?? 0, 3) }}</td>
                     </tr>
                 </tbody>
             </table>

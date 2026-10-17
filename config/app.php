@@ -123,4 +123,18 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | System Currency Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Defines the unified system-wide currency, code, and display symbol.
+    |
+    */
+
+    'currency' => env('APP_CURRENCY', 'R.O.'),
+    'currency_code' => env('APP_CURRENCY_CODE', 'OMR'),
+    'currency_name' => env('APP_CURRENCY_NAME', 'Omani Rial'),
+    'currency_precision' => (int) env('APP_CURRENCY_PRECISION', 3),
+
 ];

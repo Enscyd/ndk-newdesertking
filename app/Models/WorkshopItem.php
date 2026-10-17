@@ -11,8 +11,16 @@ class WorkshopItem extends Model
 
     protected $fillable = [
         'description',
+        'qty',
+        'rate',
         'price',
         'billId'
+    ];
+
+    protected $casts = [
+        'qty' => 'decimal:2',
+        'rate' => 'decimal:3',
+        'price' => 'decimal:3',
     ];
 
     public function bill()

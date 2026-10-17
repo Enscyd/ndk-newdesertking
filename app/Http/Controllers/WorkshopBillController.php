@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\WorkshopBill;
 use App\Models\WorkshopItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class WorkshopBillController extends Controller
@@ -134,13 +135,29 @@ class WorkshopBillController extends Controller
                 'total_amount' => $total,
             ]);
 
+            $hasQtyCol = Schema::hasColumn('workshopitems', 'qty');
+            $hasRateCol = Schema::hasColumn('workshopitems', 'rate');
+
             // Create items
             foreach ($items as $item) {
-                WorkshopItem::create([
+                $qty = isset($item['qty']) && is_numeric($item['qty']) && (float)$item['qty'] > 0 ? (float)$item['qty'] : 1;
+                $rate = isset($item['rate']) && is_numeric($item['rate']) ? (float)$item['rate'] : (float)$item['price'];
+                $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : round($qty * $rate, 3);
+
+                $itemData = [
                     'description' => $item['description'],
-                    'price' => $item['price'],
+                    'price' => $price,
                     'billId' => $bill->id
-                ]);
+                ];
+
+                if ($hasQtyCol) {
+                    $itemData['qty'] = $qty;
+                }
+                if ($hasRateCol) {
+                    $itemData['rate'] = $rate;
+                }
+
+                WorkshopItem::create($itemData);
             }
 
             DB::commit();
@@ -282,19 +299,48 @@ class WorkshopBillController extends Controller
         try {
             $request->validate([
                 'description' => 'required|string|max:255',
-                'price' => 'required|numeric|min:0'
+                'qty' => 'nullable|numeric|min:0.01',
+                'rate' => 'nullable|numeric|min:0',
+                'price' => 'nullable|numeric|min:0'
             ]);
 
             $item = WorkshopItem::findOrFail($id);
 
-            $item->update([
+            $qty = $request->filled('qty') ? (float)$request->qty : (float)($item->qty ?? 1);
+            if ($qty <= 0) $qty = 1;
+
+            $rate = $request->filled('rate') 
+                ? (float)$request->rate 
+                : (float)($item->rate ?? $request->price ?? $item->price);
+            
+            $price = $request->filled('price') && !$request->filled('rate')
+                ? (float)$request->price
+                : round($qty * $rate, 3);
+
+            $updateData = [
                 'description' => $request->description,
-                'price' => $request->price
-            ]);
+                'price' => $price
+            ];
+
+            if (Schema::hasColumn('workshopitems', 'qty')) {
+                $updateData['qty'] = $qty;
+            }
+            if (Schema::hasColumn('workshopitems', 'rate')) {
+                $updateData['rate'] = $rate;
+            }
+
+            $item->update($updateData);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item updated successfully'
+                'message' => 'Item updated successfully',
+                'item' => [
+                    'id' => $item->id,
+                    'description' => $item->description,
+                    'qty' => $qty,
+                    'rate' => $rate,
+                    'price' => $price
+                ]
             ]);
 
         } catch (\Exception $e) {

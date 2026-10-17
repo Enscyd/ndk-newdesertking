@@ -18,6 +18,10 @@ class WorkshopBill extends Model
         'total_amount'
     ];
 
+    protected $casts = [
+        'total_amount' => 'decimal:3',
+    ];
+
     public function items()
     {
         return $this->hasMany(WorkshopItem::class, 'billId', 'id');

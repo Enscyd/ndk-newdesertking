@@ -117,17 +117,31 @@
             <input type="text" name="name" placeholder="Name" class="input w-full mb-2">
 
             <div style="position:relative;">
-    <input type="text" id="description" placeholder="Item Description" class="input w-full mb-2" autocomplete="off">
+                <input type="text" id="description" placeholder="Item Description" class="input w-full mb-2" autocomplete="off">
+                <div id="suggestionsBox"
+                    style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:6px; display:none; max-height:150px; overflow-y:auto; z-index:999;">
+                </div>
+            </div>
 
-    <div id="suggestionsBox"
-        style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:6px; display:none; max-height:150px; overflow-y:auto; z-index:999;">
-    </div>
-</div>
-            <input type="number" id="price" placeholder="Item Price" class="input w-full mb-2">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;" class="mb-2">
+                <input type="number" id="qty" placeholder="Qty" value="1" step="any" min="0.01" class="input w-full">
+                <input type="number" id="rate" placeholder="Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})" step="any" min="0" class="input w-full">
+            </div>
 
-            <button type="button" onclick="addItem()" class="btn-add mb-3">+ Add</button>
+            <input type="number" id="price" placeholder="Amount (Qty × Rate)" step="any" min="0" class="input w-full mb-2">
 
-            <table>
+            <button type="button" onclick="addItem()" class="btn-add mb-3">+ Add Item</button>
+
+            <table style="font-size:12px; margin-bottom:10px;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th>Desc</th>
+                        <th>Qty</th>
+                        <th>Rate</th>
+                        <th>Amt</th>
+                        <th style="width:30px;"></th>
+                    </tr>
+                </thead>
                 <tbody id="itemsTable"></tbody>
             </table>
 
@@ -298,25 +312,36 @@
 
                     <table>
                         <thead>
-                            <tr>
+                            <tr style="background:#f8fafc;">
                                 <th>Description</th>
-                                <th>Price</th>
-                                <th style="width:150px;">Actions</th>
+                                <th style="width:90px;">Qty</th>
+                                <th style="width:110px;">Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})</th>
+                                <th style="width:110px;">Amount ({{ \App\Helpers\CurrencyHelper::symbol() }})</th>
+                                <th style="width:140px;">Actions</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             @forelse($bill->items as $item)
+                            @php
+                                $itemQty = isset($item->qty) && (float)$item->qty > 0 ? (float)$item->qty : 1;
+                                $itemRate = isset($item->rate) && (float)$item->rate > 0 ? (float)$item->rate : (float)($item->price ?? 0);
+                                $itemPrice = isset($item->price) ? (float)$item->price : ($itemQty * $itemRate);
+                            @endphp
                             <tr data-item-id="{{ $item->id }}">
                                 <td class="item-desc">{{ $item->description }}</td>
-                                <td class="item-price">{{ $item->price }}</td>
+                                <td class="item-qty">{{ $itemQty == (int)$itemQty ? (int)$itemQty : number_format($itemQty, 2) }}</td>
+                                <td class="item-rate">{{ number_format($itemRate, 3) }}</td>
+                                <td class="item-price">{{ number_format($itemPrice, 3) }}</td>
                                 <td>
 
                                     <button 
                                         class="btn-edit"
                                         data-id="{{ $item->id }}"
                                         data-description="{{ $item->description }}"
-                                        data-price="{{ $item->price }}"
+                                        data-qty="{{ $itemQty }}"
+                                        data-rate="{{ $itemRate }}"
+                                        data-price="{{ $itemPrice }}"
                                         onclick="handleEditItem(this)">
                                         Edit
                                     </button>
@@ -330,7 +355,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3">No items found</td>
+                                <td colspan="5" style="text-align:center; color:#6b7280; padding:10px;">No items found</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -371,26 +396,40 @@
 <!-- MODAL -->
 <div id="editItemModal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.4); justify-content:center; align-items:center;">
+    background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:9999;">
 
-    <div style="background:white; padding:20px; border-radius:10px; width:350px;">
+    <div style="background:white; padding:20px; border-radius:10px; width:380px;">
 
-        <h3>Edit Item</h3>
+        <h3 class="font-bold text-lg mb-2">Edit Item</h3>
 
         <input type="hidden" id="edit_item_id">
 
-        <input type="text" id="edit_description" class="input w-full mt-2">
-        <input type="number" id="edit_price" class="input w-full mt-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+        <input type="text" id="edit_description" class="input w-full mb-2">
 
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;" class="mb-2">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Qty</label>
+                <input type="number" id="edit_qty" class="input w-full" step="any" min="0.01">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})</label>
+                <input type="number" id="edit_rate" class="input w-full" step="any" min="0">
+            </div>
+        </div>
+
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Amount ({{ \App\Helpers\CurrencyHelper::symbol() }})</label>
+        <input type="number" id="edit_price" class="input w-full mb-3" step="any" min="0">
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
 
             <button onclick="closeItemModal()"
-                style="background:gray;color:white;padding:6px 12px;border-radius:5px;">
+                style="background:gray;color:white;padding:6px 12px;border-radius:5px;border:none;cursor:pointer;">
                 Cancel
             </button>
 
             <button onclick="updateItem()"
-                style="background:#2563eb;color:white;padding:6px 12px;border-radius:5px;">
+                style="background:#2563eb;color:white;padding:6px 12px;border-radius:5px;border:none;cursor:pointer;">
                 Save
             </button>
 
