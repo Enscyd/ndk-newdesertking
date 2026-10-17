@@ -58,6 +58,7 @@
             <button 
                 type="button"
                 class="edit-btn bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs mr-1"
+                onclick="openEditAccount(this)"
                 data-id="{{ $acc->id }}"
                 data-purpose-id="{{ $acc->purposeId }}"
                 data-description="{{ $acc->description ?? '' }}"

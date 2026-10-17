@@ -128,22 +128,18 @@ $(document).ready(function () {
     |--------------------------------------------------------------------------
     */
     $(document).on('click', '.edit-btn', function () {
-        let btn = $(this);
-        let id = btn.data('id');
-        let purposeId = btn.data('purpose-id');
-        let description = btn.data('description');
-        let type = btn.data('type');
-        let amount = btn.data('amount');
-        let date = btn.data('date');
-
-        $('#edit_id').val(id);
-        $('#edit_purpose_id').val(purposeId);
-        $('#edit_description').val(description);
-        $('#edit_type').val(type);
-        $('#edit_amount').val(amount);
-        $('#edit_date').val(date);
-
-        $('#editAccountModal').removeClass('hidden').addClass('flex');
+        if (typeof window.openEditAccount === 'function') {
+            window.openEditAccount(this);
+        } else {
+            let btn = $(this);
+            $('#edit_id').val(btn.data('id') || btn.attr('data-id'));
+            $('#edit_purpose_id').val(btn.data('purpose-id') || btn.attr('data-purpose-id'));
+            $('#edit_description').val(btn.data('description') !== undefined ? btn.data('description') : (btn.attr('data-description') || ''));
+            $('#edit_type').val(btn.data('type') || btn.attr('data-type'));
+            $('#edit_amount').val(btn.data('amount') || btn.attr('data-amount'));
+            $('#edit_date').val(btn.data('date') || btn.attr('data-date'));
+            $('#editAccountModal').css('display', 'flex');
+        }
     });
 
     /*
@@ -152,13 +148,21 @@ $(document).ready(function () {
     |--------------------------------------------------------------------------
     */
     $(document).on('click', '.close-edit-modal', function () {
-        $('#editAccountModal').removeClass('flex').addClass('hidden');
+        if (typeof window.closeAccountModal === 'function') {
+            window.closeAccountModal();
+        } else {
+            $('#editAccountModal').css('display', 'none');
+        }
     });
 
     // Close on backdrop click
     $('#editAccountModal').on('click', function (e) {
         if (e.target === this) {
-            $(this).removeClass('flex').addClass('hidden');
+            if (typeof window.closeAccountModal === 'function') {
+                window.closeAccountModal();
+            } else {
+                $(this).css('display', 'none');
+            }
         }
     });
 
@@ -191,7 +195,11 @@ $(document).ready(function () {
             data: $(this).serialize(),
 
             success: function (res) {
-                $('#editAccountModal').removeClass('flex').addClass('hidden');
+                if (typeof window.closeAccountModal === 'function') {
+                    window.closeAccountModal();
+                } else {
+                    $('#editAccountModal').css('display', 'none');
+                }
 
                 Swal.fire({
                     icon: 'success',
