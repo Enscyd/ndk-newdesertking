@@ -149,11 +149,16 @@
                         $blankHeight = max(120, 580 - ($currentRows * 32));
                     @endphp
 
+                    @php
+                        $calculatedTotal = 0;
+                    @endphp
+
                     @foreach($items as $index => $item)
                     @php
                         $itemQty = isset($item->qty) && (float)$item->qty > 0 ? (float)$item->qty : 1;
                         $itemRate = isset($item->rate) && (float)$item->rate > 0 ? (float)$item->rate : (float)($item->price ?? 0);
                         $itemAmount = isset($item->price) ? (float)$item->price : ($itemQty * $itemRate);
+                        $calculatedTotal += $itemAmount;
                     @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -174,7 +179,7 @@
 
                     <tr class="total-row">
                         <td colspan="4">TOTAL</td>
-                        <td>{{ \App\Helpers\CurrencyHelper::format($bill->total_amount ?? 0, 3) }}</td>
+                        <td>{{ \App\Helpers\CurrencyHelper::format($calculatedTotal, 3) }}</td>
                     </tr>
                 </tbody>
             </table>

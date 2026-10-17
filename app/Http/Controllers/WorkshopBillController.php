@@ -276,11 +276,17 @@ class WorkshopBillController extends Controller
     {
         try {
             $item = WorkshopItem::findOrFail($id);
+            $billId = $item->billId;
             $item->delete();
+
+            // Recalculate and update bill total
+            $newTotal = WorkshopItem::where('billId', $billId)->sum('price');
+            WorkshopBill::where('id', $billId)->update(['total_amount' => $newTotal]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item deleted successfully'
+                'message' => 'Item deleted successfully',
+                'new_total' => $newTotal
             ]);
 
         } catch (\Exception $e) {
@@ -331,9 +337,14 @@ class WorkshopBillController extends Controller
 
             $item->update($updateData);
 
+            // Recalculate and update bill total in database
+            $newTotal = WorkshopItem::where('billId', $item->billId)->sum('price');
+            WorkshopBill::where('id', $item->billId)->update(['total_amount' => $newTotal]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Item updated successfully',
+                'new_total' => $newTotal,
                 'item' => [
                     'id' => $item->id,
                     'description' => $item->description,
@@ -357,6 +368,18 @@ class WorkshopBillController extends Controller
     public function generatePDF($id)
     {
         $bill = WorkshopBill::with('items')->findOrFail($id);
+
+        // Recalculate and synchronize total_amount from items
+        $calculatedTotal = $bill->items->sum(function ($item) {
+            $itemQty = isset($item->qty) && (float) $item->qty > 0 ? (float) $item->qty : 1;
+            $itemRate = isset($item->rate) && (float) $item->rate > 0 ? (float) $item->rate : (float) ($item->price ?? 0);
+            return isset($item->price) ? (float) $item->price : ($itemQty * $itemRate);
+        });
+
+        if (abs((float) $bill->total_amount - $calculatedTotal) > 0.0001) {
+            $bill->update(['total_amount' => $calculatedTotal]);
+            $bill->total_amount = $calculatedTotal;
+        }
 
         $pdf = Pdf::loadView('workshop.pdf', compact('bill'));
 
