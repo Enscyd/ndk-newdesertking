@@ -15,10 +15,10 @@
 <h3>NDK Accounts Report ({{ date('F', mktime(0,0,0,$month,1)) }} {{ $year }})</h3>
 
 <p>
-    Opening: {{ number_format($opening,2) }} |
-    Income: {{ number_format($income,2) }} |
-    Expense: {{ number_format($expense,2) }} |
-    Net: {{ number_format($net,2) }}
+    Opening: {{ number_format($opening, 3) }} |
+    Income: {{ number_format($income, 3) }} |
+    Expense: {{ number_format($expense, 3) }} |
+    Net: {{ number_format($net, 3) }}
 </p>
 
 <table>
@@ -37,7 +37,7 @@
 
         <tr>
             <td colspan="5">Opening</td>
-            <td class="text-right">{{ number_format($opening,2) }}</td>
+            <td class="text-right">{{ number_format($opening, 3) }}</td>
         </tr>
 
         @foreach($accounts as $acc)
@@ -48,10 +48,10 @@
             <td>{{ $acc->purpose->name ?? '-' }}</td>
             <td class="text-right">
                 {{ $acc->type == 'INCOME' ? '+' : '-' }}
-                {{ number_format($acc->amount,2) }}
+                {{ number_format($acc->amount, 3) }}
             </td>
             <td class="text-right">
-                {{ number_format($acc->running_balance,2) }}
+                {{ number_format($acc->running_balance, 3) }}
             </td>
         </tr>
         @endforeach

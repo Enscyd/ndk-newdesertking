@@ -6,7 +6,7 @@
             OPENING BALANCE
         </td>
         <td class="text-right px-2">
-            {{ number_format($opening, 2) }}
+            {{ number_format($opening, 3) }}
         </td>
     </tr>
 
@@ -44,13 +44,13 @@
             {{ $acc->type == 'INCOME' ? 'text-green-600' : 'text-red-600' }}">
             
             {{ $acc->type == 'INCOME' ? '+' : '-' }}
-            {{ number_format($acc->amount, 2) }}
+            {{ number_format($acc->amount, 3) }}
             
         </td>
 
         <!-- RUNNING BALANCE -->
         <td class="border p-2 text-right font-bold text-blue-700">
-            {{ number_format($acc->running_balance ?? 0, 2) }}
+            {{ number_format($acc->running_balance ?? 0, 3) }}
         </td>
 
         <!-- ACTION -->
@@ -70,11 +70,11 @@
     <tr class="bg-gray-800 text-white font-bold text-sm">
 
         <td colspan="2" class="px-2">
-            INCOME : {{ number_format($income, 2) }}
+            INCOME : {{ number_format($income, 3) }}
         </td>
 
         <td colspan="2" class="px-2">
-            EXPENSE : {{ number_format($expense, 2) }}
+            EXPENSE : {{ number_format($expense, 3) }}
         </td>
 
         <td class="text-right px-2">
@@ -82,7 +82,7 @@
         </td>
 
         <td class="text-right px-2">
-            {{ number_format($net, 2) }}
+            {{ number_format($net, 3) }}
         </td>
 
         <!-- EMPTY FOR ACTION COLUMN -->

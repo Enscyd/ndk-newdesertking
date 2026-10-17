@@ -140,7 +140,7 @@ model accounts {
   purposeId   Int
   description String?
   type        Accounts_type
-  amount      Float
+  amount      Decimal       @db.Decimal(10, 3)
   date        DateTime
 
   @@index([purposeId], map: "accounts_purposeId_fkey")

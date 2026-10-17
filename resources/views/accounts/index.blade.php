@@ -45,7 +45,7 @@
             </select>
 
             <label>Amount</label>
-            <input type="number" name="amount" class="w-full border p-2 mb-2">
+            <input type="number" step="0.001" min="0" placeholder="0.000" name="amount" class="w-full border p-2 mb-2" required>
 
             <label>Date</label>
             <input type="date" name="date" class="w-full border p-2 mb-2">
@@ -121,19 +121,19 @@
             <div class="mb-3 font-semibold">
 
                 <span class="text-blue-700">
-                    OPENING : {{ number_format($opening, 2) }}
+                    OPENING : {{ number_format($opening, 3) }}
                 </span>
 
                 <span class="text-green-600 ml-4">
-                    INCOME : {{ number_format($income, 2) }}
+                    INCOME : {{ number_format($income, 3) }}
                 </span>
 
                 <span class="text-red-600 ml-4">
-                    EXPENSE : {{ number_format($expense, 2) }}
+                    EXPENSE : {{ number_format($expense, 3) }}
                 </span>
 
                 <span class="ml-4">
-                    NET BALANCE : {{ number_format($net, 2) }}
+                    NET BALANCE : {{ number_format($net, 3) }}
                 </span>
 
             </div>

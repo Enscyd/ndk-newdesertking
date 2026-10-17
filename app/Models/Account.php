@@ -16,6 +16,11 @@ class Account extends Model
 
     public $timestamps = false;
 
+    protected $casts = [
+        'amount' => 'decimal:3',
+        'date' => 'date',
+    ];
+
     // Relation
     public function purpose()
     {

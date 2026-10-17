@@ -54,7 +54,7 @@ class AccountController extends Controller
                 'purposeId' => $request->purpose_id,
                 'description' => $request->description,
                 'type' => $request->type,
-                'amount' => $request->amount,
+                'amount' => number_format((float) $request->amount, 3, '.', ''),
                 'date' => $request->date
             ]);
 
