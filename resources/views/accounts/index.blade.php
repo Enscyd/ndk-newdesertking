@@ -13,6 +13,7 @@
     const accountStoreUrl = "{{ route('accounts.store') }}";
     const accountIndexUrl = "{{ route('accounts.index') }}";
     const accountPdfUrl = "{{ route('accounts.pdf') }}";
+    const accountPrintUrl = "{{ route('accounts.print') }}";
 
     window.openEditAccount = function(btn) {
         let $btn = $(btn);
@@ -134,6 +135,13 @@
                target="_blank"
                class="bg-green-600 hover:bg-green-700 text-white px-4 flex items-center rounded transition">
                 Export PDF
+            </a>
+
+            <a href="{{ route('accounts.print', request()->all()) }}" 
+               id="printBtn"
+               target="_blank"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 flex items-center rounded transition">
+                Print
             </a>
 
         </form>

@@ -169,6 +169,7 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     Route::put('/accounts/{id}', [AccountController::class, 'update'])->name('accounts.update');
     Route::delete('/accounts/{id}', [AccountController::class, 'destroy'])->name('accounts.destroy');
     Route::get('/accounts/pdf', [AccountController::class, 'exportPdf'])->name('accounts.pdf');
+    Route::get('/accounts/print', [AccountController::class, 'print'])->name('accounts.print');
 
     /* =========================
        WORKSHOP

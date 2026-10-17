@@ -143,6 +143,13 @@ public function exportPdf(Request $request)
     return $pdf->download('ledger.pdf');
 }
 
+public function print(Request $request)
+{
+    $data = $this->getLedgerData($request);
+
+    return view('accounts.print', $data);
+}
+
 
 
 private function getLedgerData($request)

@@ -61,24 +61,27 @@ $(document).ready(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | FILTER (AJAX - BUTTON ONLY)
+    | FILTER & EXPORT / PRINT LINKS (DYNAMIC ACTIVE FILTERS)
     |--------------------------------------------------------------------------
     */
-    function updatePdfLink() {
+    function updateFilterLinks() {
+        let params = $('#filterForm').serialize();
         if (typeof accountPdfUrl !== 'undefined') {
-            let params = $('#filterForm').serialize();
             $('#exportPdfBtn').attr('href', accountPdfUrl + '?' + params);
+        }
+        if (typeof accountPrintUrl !== 'undefined') {
+            $('#printBtn').attr('href', accountPrintUrl + '?' + params);
         }
     }
 
     $('#filterForm').on('change', 'select', function () {
-        updatePdfLink();
+        updateFilterLinks();
     });
 
     $('#filterForm').submit(function (e) {
         e.preventDefault();
         let formData = $(this).serialize();
-        updatePdfLink();
+        updateFilterLinks();
         loadLedger(formData);
     });
 
@@ -86,6 +89,13 @@ $(document).ready(function () {
         e.preventDefault();
         let params = $('#filterForm').serialize();
         let url = (typeof accountPdfUrl !== 'undefined' ? accountPdfUrl : $(this).attr('href')) + '?' + params;
+        window.open(url, '_blank');
+    });
+
+    $(document).on('click', '#printBtn', function (e) {
+        e.preventDefault();
+        let params = $('#filterForm').serialize();
+        let url = (typeof accountPrintUrl !== 'undefined' ? accountPrintUrl : $(this).attr('href')) + '?' + params;
         window.open(url, '_blank');
     });
 
@@ -273,6 +283,7 @@ $(document).ready(function () {
     function fetchLedger() {
 
         let params = $('#filterForm').serialize();
+        updateFilterLinks();
 
         $.get(accountIndexUrl + '?' + params, function (data) {
 
