@@ -297,14 +297,20 @@
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         <strong>Items</strong>
 
-                        <div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <a href="/workshop/print/{{ $bill->id }}" target="_blank"
+                                style="background:#2563eb;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;font-weight:500;">
+                                🖨️ Print
+                            </a>
+
                             <a href="/workshop/pdf/{{ $bill->id }}" target="_blank"
-                                style="background:#059669;color:white;padding:6px 10px;border-radius:5px;text-decoration:none;">
+                                style="background:#059669;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;font-weight:500;">
                                 PDF
                             </a>
 
                             <button onclick="deleteBill({{ $bill->id }})"
-                                class="btn-delete">
+                                class="btn-delete"
+                                style="padding:6px 12px;">
                                 Delete Bill
                             </button>
                         </div>

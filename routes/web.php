@@ -182,6 +182,7 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     Route::get('/workshop/item/edit/{id}', [WorkshopBillController::class, 'editItem']);
     Route::post('/workshop/item/update/{id}', [WorkshopBillController::class, 'updateItem']);
     Route::get('/workshop/pdf/{id}', [WorkshopBillController::class, 'generatePDF']);
+    Route::get('/workshop/print/{id}', [WorkshopBillController::class, 'printInvoice'])->name('workshop.print');
     Route::get('/item-suggestions', [WorkshopBillController::class, 'itemSuggestions']);
 
     /* =========================

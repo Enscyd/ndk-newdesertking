@@ -387,6 +387,27 @@ class WorkshopBillController extends Controller
     }
 
     /**
+     * Instant browser print invoice
+     */
+    public function printInvoice($id)
+    {
+        $bill = WorkshopBill::with('items')->findOrFail($id);
+
+        $calculatedTotal = $bill->items->sum(function ($item) {
+            $itemQty = isset($item->qty) && (float) $item->qty > 0 ? (float) $item->qty : 1;
+            $itemRate = isset($item->rate) && (float) $item->rate > 0 ? (float) $item->rate : (float) ($item->price ?? 0);
+            return isset($item->price) ? (float) $item->price : ($itemQty * $itemRate);
+        });
+
+        if (abs((float) $bill->total_amount - $calculatedTotal) > 0.0001) {
+            $bill->update(['total_amount' => $calculatedTotal]);
+            $bill->total_amount = $calculatedTotal;
+        }
+
+        return view('workshop.print', compact('bill'));
+    }
+
+    /**
      * Edit bill
      */
     public function edit(Request $request, $id)
