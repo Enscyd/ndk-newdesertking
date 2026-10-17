@@ -64,13 +64,29 @@ $(document).ready(function () {
     | FILTER (AJAX - BUTTON ONLY)
     |--------------------------------------------------------------------------
     */
+    function updatePdfLink() {
+        if (typeof accountPdfUrl !== 'undefined') {
+            let params = $('#filterForm').serialize();
+            $('#exportPdfBtn').attr('href', accountPdfUrl + '?' + params);
+        }
+    }
+
+    $('#filterForm').on('change', 'select', function () {
+        updatePdfLink();
+    });
+
     $('#filterForm').submit(function (e) {
-
         e.preventDefault();
-
         let formData = $(this).serialize();
-
+        updatePdfLink();
         loadLedger(formData);
+    });
+
+    $(document).on('click', '#exportPdfBtn', function (e) {
+        e.preventDefault();
+        let params = $('#filterForm').serialize();
+        let url = (typeof accountPdfUrl !== 'undefined' ? accountPdfUrl : $(this).attr('href')) + '?' + params;
+        window.open(url, '_blank');
     });
 
 

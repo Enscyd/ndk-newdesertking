@@ -12,7 +12,16 @@
 </head>
 <body>
 
-<h3>NDK Accounts Report ({{ date('F', mktime(0,0,0,$month,1)) }} {{ $year }})</h3>
+<h3>
+    NDK Accounts Report 
+    @if(!empty($month) && !empty($year))
+        ({{ date('F', mktime(0, 0, 0, (int)$month, 1)) }} {{ $year }})
+    @elseif(!empty($year))
+        ({{ $year }})
+    @else
+        (All Records)
+    @endif
+</h3>
 
 <p>
     Opening: {{ number_format($opening, 3) }} |

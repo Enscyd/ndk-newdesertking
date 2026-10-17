@@ -12,6 +12,7 @@
 <script>
     const accountStoreUrl = "{{ route('accounts.store') }}";
     const accountIndexUrl = "{{ route('accounts.index') }}";
+    const accountPdfUrl = "{{ route('accounts.pdf') }}";
 
     window.openEditAccount = function(btn) {
         let $btn = $(btn);
@@ -129,10 +130,11 @@
             </a>
 
             <a href="{{ route('accounts.pdf', request()->all()) }}" 
-   target="_blank"
-   class="bg-green-600 text-white px-4 flex items-center">
-    Export PDF
-</a>
+               id="exportPdfBtn"
+               target="_blank"
+               class="bg-green-600 hover:bg-green-700 text-white px-4 flex items-center rounded transition">
+                Export PDF
+            </a>
 
         </form>
 
