@@ -124,6 +124,98 @@ $(document).ready(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | EDIT ACCOUNT (OPEN MODAL)
+    |--------------------------------------------------------------------------
+    */
+    $(document).on('click', '.edit-btn', function () {
+        let btn = $(this);
+        let id = btn.data('id');
+        let purposeId = btn.data('purpose-id');
+        let description = btn.data('description');
+        let type = btn.data('type');
+        let amount = btn.data('amount');
+        let date = btn.data('date');
+
+        $('#edit_id').val(id);
+        $('#edit_purpose_id').val(purposeId);
+        $('#edit_description').val(description);
+        $('#edit_type').val(type);
+        $('#edit_amount').val(amount);
+        $('#edit_date').val(date);
+
+        $('#editAccountModal').removeClass('hidden').addClass('flex');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE EDIT MODAL
+    |--------------------------------------------------------------------------
+    */
+    $(document).on('click', '.close-edit-modal', function () {
+        $('#editAccountModal').removeClass('flex').addClass('hidden');
+    });
+
+    // Close on backdrop click
+    $('#editAccountModal').on('click', function (e) {
+        if (e.target === this) {
+            $(this).removeClass('flex').addClass('hidden');
+        }
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE ACCOUNT (AJAX)
+    |--------------------------------------------------------------------------
+    */
+    $('#editAccountForm').submit(function (e) {
+        e.preventDefault();
+
+        let id = $('#edit_id').val();
+        let amount = $('#edit_amount').val();
+        let type = $('#edit_type').val();
+
+        if (!amount || !type) {
+            Swal.fire('Error', 'Type and Amount are required', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Updating...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        $.ajax({
+            url: accountIndexUrl + '/' + id,
+            type: "PUT",
+            data: $(this).serialize(),
+
+            success: function (res) {
+                $('#editAccountModal').removeClass('flex').addClass('hidden');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: res.message || 'Updated successfully',
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+
+                fetchLedger();
+            },
+
+            error: function (xhr) {
+                let msg = 'Update failed';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                Swal.fire('Error', msg, 'error');
+            }
+        });
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
     | LOAD LEDGER (COMMON FUNCTION)
     |--------------------------------------------------------------------------
     */

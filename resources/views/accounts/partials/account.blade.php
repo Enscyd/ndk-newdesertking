@@ -54,8 +54,20 @@
         </td>
 
         <!-- ACTION -->
-        <td class="border p-2 text-center">
+        <td class="border p-2 text-center whitespace-nowrap">
             <button 
+                type="button"
+                class="edit-btn bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs mr-1"
+                data-id="{{ $acc->id }}"
+                data-purpose-id="{{ $acc->purposeId }}"
+                data-description="{{ $acc->description ?? '' }}"
+                data-type="{{ $acc->type }}"
+                data-amount="{{ number_format($acc->amount, 3, '.', '') }}"
+                data-date="{{ \Carbon\Carbon::parse($acc->date)->format('Y-m-d') }}">
+                Edit
+            </button>
+            <button 
+                type="button"
                 class="delete-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
                 data-id="{{ $acc->id }}">
                 Delete

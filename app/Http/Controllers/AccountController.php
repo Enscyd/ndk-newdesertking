@@ -74,6 +74,40 @@ class AccountController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'purpose_id' => 'required',
+                'type' => 'required|in:INCOME,EXPENSE',
+                'amount' => 'required|numeric|min:0',
+                'date' => 'required|date'
+            ]);
+
+            $account = Account::findOrFail($id);
+            $account->update([
+                'purposeId' => $request->purpose_id,
+                'description' => $request->description,
+                'type' => $request->type,
+                'amount' => number_format((float) $request->amount, 3, '.', ''),
+                'date' => $request->date
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Updated successfully',
+                'data' => $account
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Update failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy($id)
 {
     try {

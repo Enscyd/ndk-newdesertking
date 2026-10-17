@@ -166,6 +166,7 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     ========================= */
     Route::get('/accounts', [AccountController::class,'index'])->name('accounts.index');
     Route::post('/accounts', [AccountController::class,'store'])->name('accounts.store');
+    Route::put('/accounts/{id}', [AccountController::class, 'update'])->name('accounts.update');
     Route::delete('/accounts/{id}', [AccountController::class, 'destroy'])->name('accounts.destroy');
     Route::get('/accounts/pdf', [AccountController::class, 'exportPdf'])->name('accounts.pdf');
 
