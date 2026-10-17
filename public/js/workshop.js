@@ -8,10 +8,17 @@ function getCSRF() {
 
 /* ADD ITEM */
 function addItem() {
-    let desc = document.getElementById('description').value.trim();
-    let qty = parseFloat(document.getElementById('qty').value);
-    let rate = parseFloat(document.getElementById('rate').value);
-    let price = parseFloat(document.getElementById('price').value);
+    let descEl = document.getElementById('description');
+    let qtyEl = document.getElementById('qty');
+    let rateEl = document.getElementById('rate');
+    let priceEl = document.getElementById('price');
+
+    if (!descEl || !qtyEl || !rateEl || !priceEl) return false;
+
+    let desc = descEl.value.trim();
+    let qty = parseFloat(qtyEl.value);
+    let rate = parseFloat(rateEl.value);
+    let price = parseFloat(priceEl.value);
 
     if (isNaN(qty) || qty <= 0) qty = 1;
 
@@ -23,7 +30,7 @@ function addItem() {
 
     if (!desc || isNaN(price) || price < 0) {
         alert('Please enter a valid description and rate/amount');
-        return;
+        return false;
     }
 
     price = Math.round(price * 1000) / 1000;
@@ -31,12 +38,13 @@ function addItem() {
 
     items.push({ description: desc, qty: qty, rate: rate, price: price });
 
-    document.getElementById('description').value = '';
-    document.getElementById('qty').value = '1';
-    document.getElementById('rate').value = '';
-    document.getElementById('price').value = '';
+    descEl.value = '';
+    qtyEl.value = '1';
+    rateEl.value = '';
+    priceEl.value = '';
 
     renderTable();
+    return true;
 }
 
 /* DELETE ITEM (FORM) */
@@ -55,9 +63,10 @@ function renderTable() {
     items.forEach(function(item, i) {
         total += item.price;
 
+        let displayQty = (Number(item.qty) % 1 === 0 ? Number(item.qty) : Number(item.qty).toFixed(2));
         html += '<tr>' +
             '<td>' + item.description + '</td>' +
-            '<td>' + item.qty + '</td>' +
+            '<td>' + displayQty + '</td>' +
             '<td>' + Number(item.rate).toFixed(3) + '</td>' +
             '<td>' + Number(item.price).toFixed(3) + '</td>' +
             '<td>' +
@@ -67,9 +76,14 @@ function renderTable() {
         '</tr>';
     });
 
-    document.getElementById('itemsTable').innerHTML = html;
-    document.getElementById('total_amount').value = Math.round(total * 1000) / 1000;
-    document.getElementById('itemsInput').value = JSON.stringify(items);
+    const itemsTable = document.getElementById('itemsTable');
+    if (itemsTable) itemsTable.innerHTML = html;
+
+    const totalEl = document.getElementById('total_amount');
+    if (totalEl) totalEl.value = Number(total).toFixed(3);
+
+    const itemsInput = document.getElementById('itemsInput');
+    if (itemsInput) itemsInput.value = JSON.stringify(items);
 }
 
 /* TOGGLE */
@@ -244,7 +258,7 @@ function updateItem() {
                 editBtn.dataset.price = price;
             }
 
-            updateBillTotal(row);
+            updateBillTotal(row, data.new_total);
 
             row.style.background = '#d1fae5';
             setTimeout(() => row.style.background = '', 1000);
@@ -255,18 +269,20 @@ function updateItem() {
 }
 
 /* UPDATE TOTAL */
-function updateBillTotal(row) {
+function updateBillTotal(row, serverTotal) {
 
     let container = row.closest('td');
     if (!container) return;
 
-    let prices = container.querySelectorAll('.item-price');
-
     let total = 0;
-
-    prices.forEach(el => {
-        total += parseFloat(el.innerText) || 0;
-    });
+    if (serverTotal !== undefined && serverTotal !== null) {
+        total = parseFloat(serverTotal) || 0;
+    } else {
+        let prices = container.querySelectorAll('.item-price');
+        prices.forEach(el => {
+            total += parseFloat(el.innerText.replace(/,/g, '')) || 0;
+        });
+    }
 
     let billRow = container.closest('tr').previousElementSibling;
 
@@ -359,36 +375,88 @@ if (descriptionInput && suggestionsBox) {
     });
 }
 
-// Auto-calculate Amount = Qty * Rate on input
+// Auto-calculate Amount = Qty * Rate on input (Bi-directional)
 function initAutoCalc() {
     const q = document.getElementById('qty');
     const r = document.getElementById('rate');
     const p = document.getElementById('price');
+
     if (q && r && p) {
-        const recalc = () => {
+        q.addEventListener('input', () => {
             const qVal = parseFloat(q.value) || 0;
-            const rVal = parseFloat(r.value) || 0;
-            if (qVal > 0 && rVal >= 0) {
+            const rVal = parseFloat(r.value);
+            const pVal = parseFloat(p.value);
+
+            if (qVal > 0 && !isNaN(rVal) && rVal >= 0 && r.value !== '') {
+                p.value = (qVal * rVal).toFixed(3);
+            } else if (qVal > 0 && !isNaN(pVal) && pVal >= 0 && p.value !== '') {
+                r.value = (pVal / qVal).toFixed(3);
+            }
+        });
+
+        r.addEventListener('input', () => {
+            const qVal = parseFloat(q.value) || 1;
+            const rVal = parseFloat(r.value);
+            if (!isNaN(rVal) && rVal >= 0 && r.value !== '') {
                 p.value = (qVal * rVal).toFixed(3);
             }
-        };
-        q.addEventListener('input', recalc);
-        r.addEventListener('input', recalc);
+        });
+
+        p.addEventListener('input', () => {
+            const qVal = parseFloat(q.value) || 1;
+            const pVal = parseFloat(p.value);
+            if (!isNaN(pVal) && pVal >= 0 && p.value !== '') {
+                r.value = (pVal / qVal).toFixed(3);
+            }
+        });
     }
 
     const eq = document.getElementById('edit_qty');
     const er = document.getElementById('edit_rate');
     const ep = document.getElementById('edit_price');
+
     if (eq && er && ep) {
-        const recalcEdit = () => {
+        eq.addEventListener('input', () => {
             const qVal = parseFloat(eq.value) || 0;
-            const rVal = parseFloat(er.value) || 0;
-            if (qVal > 0 && rVal >= 0) {
+            const rVal = parseFloat(er.value);
+            const pVal = parseFloat(ep.value);
+
+            if (qVal > 0 && !isNaN(rVal) && rVal >= 0 && er.value !== '') {
+                ep.value = (qVal * rVal).toFixed(3);
+            } else if (qVal > 0 && !isNaN(pVal) && pVal >= 0 && ep.value !== '') {
+                er.value = (pVal / qVal).toFixed(3);
+            }
+        });
+
+        er.addEventListener('input', () => {
+            const qVal = parseFloat(eq.value) || 1;
+            const rVal = parseFloat(er.value);
+            if (!isNaN(rVal) && rVal >= 0 && er.value !== '') {
                 ep.value = (qVal * rVal).toFixed(3);
             }
-        };
-        eq.addEventListener('input', recalcEdit);
-        er.addEventListener('input', recalcEdit);
+        });
+
+        ep.addEventListener('input', () => {
+            const qVal = parseFloat(eq.value) || 1;
+            const pVal = parseFloat(ep.value);
+            if (!isNaN(pVal) && pVal >= 0 && ep.value !== '') {
+                er.value = (pVal / qVal).toFixed(3);
+            }
+        });
+    }
+
+    // Automatically add pending item when submitting form if description & price/rate are typed
+    const form = document.getElementById('workshopBillForm') || document.querySelector('form[action*="workshop/store"]');
+    if (form && !form.dataset.autoAddBound) {
+        form.dataset.autoAddBound = 'true';
+        form.addEventListener('submit', function(e) {
+            const desc = document.getElementById('description')?.value.trim();
+            const price = document.getElementById('price')?.value;
+            const rate = document.getElementById('rate')?.value;
+            if (desc && (price || rate)) {
+                addItem();
+            }
+        });
     }
 }
 

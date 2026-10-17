@@ -109,26 +109,26 @@
             <div class="text-red-600 mb-2">{{ session('error') }}</div>
         @endif
 
-        <form method="POST" action="{{ route('workshop.store') }}">
+        <form method="POST" action="{{ route('workshop.store') }}" id="workshopBillForm">
             @csrf
 
-            <input type="text" name="bill_no" value="{{ $nextBillNo }}"class="input w-full mb-2" readonly>
+            <input type="text" name="bill_no" value="{{ $nextBillNo }}" class="input w-full mb-2" readonly>
             <input type="text" name="vehicle_no" placeholder="Vehicle No" class="input w-full mb-2" required>
             <input type="text" name="name" placeholder="Name" class="input w-full mb-2">
 
             <div style="position:relative;">
-                <input type="text" id="description" placeholder="Item Description" class="input w-full mb-2" autocomplete="off">
+                <input type="text" id="description" name="description" placeholder="Item Description" class="input w-full mb-2" autocomplete="off">
                 <div id="suggestionsBox"
                     style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:6px; display:none; max-height:150px; overflow-y:auto; z-index:999;">
                 </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;" class="mb-2">
-                <input type="number" id="qty" placeholder="Qty" value="1" step="any" min="0.01" class="input w-full">
-                <input type="number" id="rate" placeholder="Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})" step="any" min="0" class="input w-full">
+                <input type="number" id="qty" name="qty" placeholder="Qty" value="1" step="any" min="0.01" class="input w-full">
+                <input type="number" id="rate" name="rate" placeholder="Rate ({{ \App\Helpers\CurrencyHelper::symbol() }})" step="any" min="0" class="input w-full">
             </div>
 
-            <input type="number" id="price" placeholder="Amount (Qty × Rate)" step="any" min="0" class="input w-full mb-2">
+            <input type="number" id="price" name="price" placeholder="Amount (Qty × Rate)" step="any" min="0" class="input w-full mb-2">
 
             <button type="button" onclick="addItem()" class="btn-add mb-3">+ Add Item</button>
 
@@ -147,7 +147,8 @@
 
             <input type="hidden" name="items" id="itemsInput">
 
-            <input type="number" id="total_amount" name="total_amount" class="input w-full mt-2" readonly>
+            <label class="block text-xs font-semibold text-gray-600 mt-2 mb-1">Total Amount ({{ \App\Helpers\CurrencyHelper::symbol() }})</label>
+            <input type="number" id="total_amount" name="total_amount" placeholder="Total Amount (0.000)" step="any" class="input w-full" readonly>
 
             <input type="date" name="date" class="input w-full mt-2" required>
 
@@ -269,7 +270,7 @@
                 <td>{{ $bill->bill_no }}</td>
                 <td>{{ $bill->vehicle_no }}</td>
                 <td>{{ $bill->name ?? '-' }}</td>
-                <td class="bill-total">{{ $bill->total_amount }}</td>
+                <td class="bill-total">{{ number_format((float)$bill->total_amount, 3) }}</td>
                 <td id="status-cell-{{ $bill->id }}">
                     @if($bill->payment_status == 'PAID')
                         <button type="button"

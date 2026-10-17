@@ -12,10 +12,33 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class WorkshopBillController extends Controller
 {
     /**
+     * Ensure qty and rate columns exist on workshopitems table
+     */
+    protected function ensureWorkshopColumnsExist()
+    {
+        try {
+            if (!Schema::hasColumn('workshopitems', 'qty')) {
+                Schema::table('workshopitems', function ($table) {
+                    $table->decimal('qty', 10, 2)->default(1);
+                });
+            }
+            if (!Schema::hasColumn('workshopitems', 'rate')) {
+                Schema::table('workshopitems', function ($table) {
+                    $table->decimal('rate', 10, 3)->default(0);
+                });
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore if already exists or permission issues
+        }
+    }
+
+    /**
      * Display bills + filters + items
      */
     public function create(Request $request)
     {
+        $this->ensureWorkshopColumnsExist();
+
         $query = WorkshopBill::with('items');
 
         // Filters
@@ -79,31 +102,61 @@ class WorkshopBillController extends Controller
             'vehicle_no' => 'required|string|max:50',
             'date' => 'required|date',
             'payment_status' => 'required|in:PAID,UNPAID',
-            'items' => 'required'
+            'items' => 'nullable'
         ]);
+
+        $this->ensureWorkshopColumnsExist();
+
+        $items = json_decode($request->items, true);
+
+        // Fallback: if items array is empty but form inputs have description and rate/price
+        if ((!is_array($items) || empty($items)) && $request->filled('description')) {
+            $desc = trim($request->description);
+            $q = $request->filled('qty') && (float)$request->qty > 0 ? (float)$request->qty : 1;
+            $r = $request->filled('rate') ? (float)$request->rate : 0;
+            $p = $request->filled('price') ? (float)$request->price : round($q * $r, 3);
+            if ($r == 0 && $q > 0 && $p > 0) {
+                $r = round($p / $q, 3);
+            }
+            if (!empty($desc) && ($p > 0 || $r > 0)) {
+                $items = [
+                    [
+                        'description' => $desc,
+                        'qty' => $q,
+                        'rate' => $r,
+                        'price' => $p,
+                    ]
+                ];
+            }
+        }
+
+        if (!is_array($items) || empty($items)) {
+            return back()->with('error', 'Please add at least one item');
+        }
 
         DB::beginTransaction();
 
         try {
-            $items = json_decode($request->items, true);
-
-            if (!is_array($items) || empty($items)) {
-                return back()->with('error', 'Please add at least one item');
-            }
-
             $total = 0;
 
-            foreach ($items as $item) {
-                if (
-                    empty($item['description']) ||
-                    !isset($item['price']) ||
-                    !is_numeric($item['price'])
-                ) {
-                    return back()->with('error', 'Invalid item data');
+            foreach ($items as &$item) {
+                if (empty($item['description'])) {
+                    return back()->with('error', 'Invalid item description');
                 }
 
-                $total += (float) $item['price'];
+                $qty = isset($item['qty']) && is_numeric($item['qty']) && (float)$item['qty'] > 0 ? (float)$item['qty'] : 1;
+                $rate = isset($item['rate']) && is_numeric($item['rate']) ? (float)$item['rate'] : (isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] / $qty : 0);
+                $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : round($qty * $rate, 3);
+
+                $item['qty'] = $qty;
+                $item['rate'] = $rate;
+                $item['price'] = $price;
+
+                $total += (float) $price;
             }
+            unset($item);
+
+            $total = round($total, 3);
 
             /**
              * Auto bill number generate
@@ -140,21 +193,17 @@ class WorkshopBillController extends Controller
 
             // Create items
             foreach ($items as $item) {
-                $qty = isset($item['qty']) && is_numeric($item['qty']) && (float)$item['qty'] > 0 ? (float)$item['qty'] : 1;
-                $rate = isset($item['rate']) && is_numeric($item['rate']) ? (float)$item['rate'] : (float)$item['price'];
-                $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : round($qty * $rate, 3);
-
                 $itemData = [
                     'description' => $item['description'],
-                    'price' => $price,
+                    'price' => $item['price'],
                     'billId' => $bill->id
                 ];
 
                 if ($hasQtyCol) {
-                    $itemData['qty'] = $qty;
+                    $itemData['qty'] = $item['qty'];
                 }
                 if ($hasRateCol) {
-                    $itemData['rate'] = $rate;
+                    $itemData['rate'] = $item['rate'];
                 }
 
                 WorkshopItem::create($itemData);
@@ -303,6 +352,8 @@ class WorkshopBillController extends Controller
     public function updateItem(Request $request, $id)
     {
         try {
+            $this->ensureWorkshopColumnsExist();
+
             $request->validate([
                 'description' => 'required|string|max:255',
                 'qty' => 'nullable|numeric|min:0.01',
