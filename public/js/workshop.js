@@ -183,7 +183,12 @@ function updateBillTotal(row) {
     let billRow = container.closest('tr').previousElementSibling;
 
     if (billRow) {
-        billRow.children[3].innerText = total; // ✅ FIXED INDEX (date column added)
+        let totalCell = billRow.querySelector('.bill-total');
+        if (totalCell) {
+            totalCell.innerText = total;
+        } else if (billRow.children[4]) {
+            billRow.children[4].innerText = total;
+        }
     }
 }
 

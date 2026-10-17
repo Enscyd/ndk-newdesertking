@@ -45,7 +45,54 @@
         flex-wrap:wrap;
     }
 
+    nav svg {
+        max-height: 1.25rem;
+        display: inline-block;
+    }
+
+    .th-sort {
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .th-sort a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        color: #374151;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .th-sort a:hover {
+        color: #2563eb;
+    }
+
 </style>
+
+@php
+    $currentSort = $sort ?? 'id';
+    $currentDir = $direction ?? 'desc';
+
+    $sortUrl = function($col) use ($currentSort, $currentDir) {
+        $nextDir = ($currentSort === $col && $currentDir === 'asc') ? 'desc' : 'asc';
+        return request()->fullUrlWithQuery([
+            'sort' => $col,
+            'direction' => $nextDir,
+            'page' => 1
+        ]);
+    };
+
+    $sortIcon = function($col) use ($currentSort, $currentDir) {
+        if ($currentSort !== $col) {
+            return '<span style="color:#9ca3af; font-size:11px; margin-left:4px;">⇅</span>';
+        }
+        return $currentDir === 'asc'
+            ? '<span style="color:#2563eb; font-weight:bold; font-size:11px; margin-left:4px;">▲</span>'
+            : '<span style="color:#2563eb; font-weight:bold; font-size:11px; margin-left:4px;">▼</span>';
+    };
+@endphp
 
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -108,6 +155,9 @@
         <!-- FILTERS -->
         <form method="GET" action="{{ route('workshop.create') }}" class="filters">
 
+            <input type="hidden" name="sort" value="{{ $currentSort }}">
+            <input type="hidden" name="direction" value="{{ $currentDir }}">
+
             <input type="text" name="vehicle_no"
                 value="{{ request('vehicle_no') }}"
                 placeholder="Vehicle No"
@@ -118,6 +168,11 @@
                 placeholder="Bill No"
                 class="input">
 
+            <input type="text" name="name"
+                value="{{ request('name') }}"
+                placeholder="Name"
+                class="input">
+
             <select name="payment_status" class="input">
                 <option value="">All Status</option>
                 <option value="PAID" {{ request('payment_status') == 'PAID' ? 'selected' : '' }}>Paid</option>
@@ -125,7 +180,7 @@
             </select>
 
             <button type="submit"
-                style="background:#2563eb;color:white;padding:7px 12px;border-radius:6px;border:none;">
+                style="background:#2563eb;color:white;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;">
                 Apply
             </button>
 
@@ -134,19 +189,60 @@
                 Reset
             </a>
 
+            <div class="ml-auto flex items-center gap-2">
+                <label for="per_page" class="text-sm text-gray-500 font-medium">Show:</label>
+                <select name="per_page" id="per_page" class="input" onchange="this.form.submit()">
+                    <option value="10" {{ ($perPage ?? 25) == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ ($perPage ?? 25) == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ ($perPage ?? 25) == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ ($perPage ?? 25) == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </div>
+
         </form>
 
         <!-- TABLE -->
         <table>
 
             <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Bill</th>
-                    <th>Vehicle</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>▼</th>
+                <tr style="background:#f8fafc;">
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('date') }}">
+                            <span>Date</span>
+                            {!! $sortIcon('date') !!}
+                        </a>
+                    </th>
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('bill_no') }}">
+                            <span>Bill</span>
+                            {!! $sortIcon('bill_no') !!}
+                        </a>
+                    </th>
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('vehicle_no') }}">
+                            <span>Vehicle</span>
+                            {!! $sortIcon('vehicle_no') !!}
+                        </a>
+                    </th>
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('name') }}">
+                            <span>Name</span>
+                            {!! $sortIcon('name') !!}
+                        </a>
+                    </th>
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('total_amount') }}">
+                            <span>Total</span>
+                            {!! $sortIcon('total_amount') !!}
+                        </a>
+                    </th>
+                    <th class="th-sort">
+                        <a href="{{ $sortUrl('payment_status') }}">
+                            <span>Status</span>
+                            {!! $sortIcon('payment_status') !!}
+                        </a>
+                    </th>
+                    <th style="width:40px; text-align:center;">▼</th>
                 </tr>
             </thead>
 
@@ -158,6 +254,7 @@
                 <td>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
                 <td>{{ $bill->bill_no }}</td>
                 <td>{{ $bill->vehicle_no }}</td>
+                <td>{{ $bill->name ?? '-' }}</td>
                 <td class="bill-total">{{ $bill->total_amount }}</td>
                 <td>
                     @if($bill->payment_status == 'PAID')
@@ -169,12 +266,12 @@
                         </button>
                     @endif
                 </td>
-                <td>▼</td>
+                <td style="text-align:center; color:#6b7280;">▼</td>
             </tr>
 
             <!-- EXPAND -->
             <tr id="items-{{ $bill->id }}" style="display:none;">
-                <td colspan="6">
+                <td colspan="7">
 
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         <strong>Items</strong>
@@ -237,13 +334,28 @@
 
             @empty
             <tr>
-                <td colspan="6">No records found</td>
+                <td colspan="7" style="text-align:center; padding:20px; color:#6b7280;">No records found</td>
             </tr>
             @endforelse
 
             </tbody>
 
         </table>
+
+        <!-- PAGINATION FOOTER -->
+        <div class="mt-4 pt-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="text-sm text-gray-600">
+                @if($bills->total() > 0)
+                    Showing <span class="font-semibold text-gray-800">{{ $bills->firstItem() }}</span> to <span class="font-semibold text-gray-800">{{ $bills->lastItem() }}</span> of <span class="font-semibold text-gray-800">{{ $bills->total() }}</span> records
+                @else
+                    No records to display
+                @endif
+            </div>
+
+            <div>
+                {{ $bills->links() }}
+            </div>
+        </div>
 
     </div>
 

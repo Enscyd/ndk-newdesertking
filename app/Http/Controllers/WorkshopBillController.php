@@ -26,11 +26,26 @@ class WorkshopBillController extends Controller
             $query->where('bill_no', 'like', '%' . $request->bill_no . '%');
         }
 
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
 
-        $bills = $query->orderBy('id', 'desc')->get();
+        // Sorting
+        $allowedSorts = ['id', 'date', 'bill_no', 'vehicle_no', 'name', 'total_amount', 'payment_status'];
+        $sort = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'id';
+        $direction = strtolower($request->get('direction')) === 'asc' ? 'asc' : 'desc';
+
+        // Pagination
+        $perPage = (int) $request->get('per_page', 25);
+        if ($perPage < 5 || $perPage > 100) {
+            $perPage = 25;
+        }
+
+        $bills = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
 
         /**
          * Auto next bill number
@@ -51,7 +66,7 @@ class WorkshopBillController extends Controller
 
         $nextBillNo = 'NDK-' . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-        return view('workshop.create', compact('bills', 'nextBillNo'));
+        return view('workshop.create', compact('bills', 'nextBillNo', 'sort', 'direction', 'perPage'));
     }
 
     /**
@@ -269,13 +284,23 @@ class WorkshopBillController extends Controller
     /**
      * Edit bill
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $bill = WorkshopBill::with('items')->findOrFail($id);
 
+        $allowedSorts = ['id', 'date', 'bill_no', 'vehicle_no', 'name', 'total_amount', 'payment_status'];
+        $sort = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'id';
+        $direction = strtolower($request->get('direction')) === 'asc' ? 'asc' : 'desc';
+
+        $perPage = (int) $request->get('per_page', 25);
+        if ($perPage < 5 || $perPage > 100) {
+            $perPage = 25;
+        }
+
         $bills = WorkshopBill::with('items')
-            ->orderBy('id', 'desc')
-            ->get();
+            ->orderBy($sort, $direction)
+            ->paginate($perPage)
+            ->withQueryString();
 
         $year = date('Y');
 
@@ -292,7 +317,7 @@ class WorkshopBillController extends Controller
 
         $nextBillNo = 'NDK-' . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-        return view('workshop.create', compact('bill', 'bills', 'nextBillNo'));
+        return view('workshop.create', compact('bill', 'bills', 'nextBillNo', 'sort', 'direction', 'perPage'));
     }
 
     public function itemSuggestions(Request $request)
