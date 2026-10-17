@@ -256,12 +256,19 @@
                 <td>{{ $bill->vehicle_no }}</td>
                 <td>{{ $bill->name ?? '-' }}</td>
                 <td class="bill-total">{{ $bill->total_amount }}</td>
-                <td>
+                <td id="status-cell-{{ $bill->id }}">
                     @if($bill->payment_status == 'PAID')
-                        <span style="color:green;font-weight:bold;">Paid</span>
+                        <button type="button"
+                            onclick="event.stopPropagation(); markUnpaid({{ $bill->id }})"
+                            title="Click to mark Unpaid"
+                            style="background:#16a34a;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;">
+                            Paid
+                        </button>
                     @else
-                        <button onclick="event.stopPropagation(); markPaid({{ $bill->id }})"
-                            style="background:#16a34a;color:white;padding:5px 10px;border:none;border-radius:5px;">
+                        <button type="button"
+                            onclick="event.stopPropagation(); markPaid({{ $bill->id }})"
+                            title="Click to mark Paid"
+                            style="background:#dc2626;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;">
                             Mark Paid
                         </button>
                     @endif

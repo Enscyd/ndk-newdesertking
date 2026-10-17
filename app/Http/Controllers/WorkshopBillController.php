@@ -165,7 +165,8 @@ class WorkshopBillController extends Controller
             if ($bill->payment_status === 'PAID') {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Already marked as paid'
+                    'message' => 'Already marked as paid',
+                    'status' => 'PAID'
                 ]);
             }
 
@@ -175,7 +176,42 @@ class WorkshopBillController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Marked as Paid successfully'
+                'message' => 'Marked as Paid successfully',
+                'status' => 'PAID'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark bill as UNPAID
+     */
+    public function markUnpaid($id)
+    {
+        try {
+            $bill = WorkshopBill::findOrFail($id);
+
+            if ($bill->payment_status === 'UNPAID') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Already marked as unpaid',
+                    'status' => 'UNPAID'
+                ]);
+            }
+
+            $bill->update([
+                'payment_status' => 'UNPAID'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Marked as Unpaid successfully',
+                'status' => 'UNPAID'
             ]);
 
         } catch (\Exception $e) {

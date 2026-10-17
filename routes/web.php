@@ -177,6 +177,7 @@ Route::post('/dashboard/password', [DashboardAuthController::class, 'updatePassw
     Route::delete('/workshop/delete/{id}', [WorkshopBillController::class, 'destroy']);
     Route::get('/workshop/edit/{id}', [WorkshopBillController::class, 'edit']);
     Route::post('/workshop/mark-paid/{id}', [WorkshopBillController::class, 'markPaid']);
+    Route::post('/workshop/mark-unpaid/{id}', [WorkshopBillController::class, 'markUnpaid']);
     Route::delete('/workshop/item/delete/{id}', [WorkshopBillController::class, 'deleteItem']);
     Route::get('/workshop/item/edit/{id}', [WorkshopBillController::class, 'editItem']);
     Route::post('/workshop/item/update/{id}', [WorkshopBillController::class, 'updateItem']);

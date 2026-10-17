@@ -88,9 +88,59 @@ function markPaid(id) {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message || 'Updated');
+        if (!data.success) {
+            alert(data.message || 'Error updating status');
+            return;
+        }
+        renderStatusCell(id, 'PAID');
+    })
+    .catch(err => alert('Network error: ' + err.message));
+}
+
+/* MARK UNPAID */
+function markUnpaid(id) {
+    if (!confirm('Mark this bill as unpaid?')) return;
+
+    fetch('/workshop/mark-unpaid/' + id, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': getCSRF() }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message || 'Error updating status');
+            return;
+        }
+        renderStatusCell(id, 'UNPAID');
+    })
+    .catch(err => alert('Network error: ' + err.message));
+}
+
+/* RENDER STATUS CELL IN-PLACE */
+function renderStatusCell(id, status) {
+    const cell = document.getElementById('status-cell-' + id);
+    if (!cell) {
         location.reload();
-    });
+        return;
+    }
+
+    if (status === 'PAID') {
+        cell.innerHTML = '<button type="button" onclick="event.stopPropagation(); markUnpaid(' + id + ')" ' +
+            'title="Click to mark Unpaid" ' +
+            'style="background:#16a34a;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;">' +
+            'Paid' +
+            '</button>';
+    } else {
+        cell.innerHTML = '<button type="button" onclick="event.stopPropagation(); markPaid(' + id + ')" ' +
+            'title="Click to mark Paid" ' +
+            'style="background:#dc2626;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;">' +
+            'Mark Paid' +
+            '</button>';
+    }
+
+    cell.style.transition = 'background 0.3s ease';
+    cell.style.background = '#d1fae5';
+    setTimeout(() => { cell.style.background = ''; }, 1000);
 }
 
 /* DELETE ITEM DB */
